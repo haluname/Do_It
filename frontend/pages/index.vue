@@ -1,4 +1,5 @@
 <template>
+  <div class="page-container">
   <v-row justify="center" align="center">
     <v-col cols="12" sm="8" md="6">
       <v-card>
@@ -17,13 +18,18 @@
       </v-card>
     </v-col>
     <v-btn @click="greet">Greet</v-btn>
+    <v-btn @click="greet">Greet</v-btn>
+    <v-img src="/img/fullLogo.svg" alt="Logo" max-width="300px"></v-img>
+
 
   </v-row>
+</div>
 
 </template>
 
 <script>
 export default {
+  
   data: () => ({
     name: ''
   }),
@@ -47,3 +53,20 @@ export default {
   }
 }
 </script>
+
+
+<style scoped>
+
+.page-container {
+  background-color: #FEE267 
+  ; /* Sostituisci con il colore desiderato */
+  min-height: 100%;
+  overflow-y: hidden;
+  width: 100vw;
+  margin: 0;
+  padding: 20px; /* Regola il padding secondo necessità */
+}
+
+
+
+</style>

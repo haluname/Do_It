@@ -1,15 +1,19 @@
 <template>
   <v-app>
-    <v-main>
-      <v-container>
-        <Nuxt />
-      </v-container>
+    <v-main class="main-container">
+      <Nuxt />
     </v-main>
   </v-app>
 </template>
 
-<script>
-export default {
-
+<style>
+.main-container {
+  padding: 0 !important;
+  margin: 0 !important;
+  background-color: inherit;
 }
-</script>
+
+html {
+  overflow: hidden !important;
+}
+</style>
