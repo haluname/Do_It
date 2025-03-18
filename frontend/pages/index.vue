@@ -1,11 +1,17 @@
 <template>
   <v-container fluid class="login-container">
     <v-row justify="center" align="center" class="fill-height">
+      <v-img
+              src="/img/logoBIG.svg"
+              alt="Logo"
+              max-width="120"
+              class="logo"
+            ></v-img>
       <v-col cols="12" md="6" lg="4">
         <v-card class="login-card" elevation="10" shaped>
           <div class="login-header">
             <v-img
-              src="/img/fullLogo.svg"
+              src="/img/logoBIG.svg"
               alt="Logo"
               max-width="120"
               class="logo"
@@ -141,8 +147,23 @@ export default {
 </script>
 
 <style scoped>
+/*
+COLORS: 
+
+#34495e BLU NAVY
+#222222 NERO
+#ffd166 GIALLO
+#fdf3e4 BEIGE
+#444444 GRIGIO
+#e8f7f7 AZZURRO PALLIDO
+#fffacd  GIALLO PASTELLO
+#fff2b8 GIALLO LEGGERMENTE PIU SCURO DEL PASTELLO
+#ffe599 GIALLO ANCORA PIU SCURETTO
+#ffd966 GIALLO SCURO
+
+*/
 .login-container {
-  background: linear-gradient(135deg, #FE8267 0%, #FEE267 100%);
+  background-color: #ffe599     ;
   height: 100vh;
 }
 
