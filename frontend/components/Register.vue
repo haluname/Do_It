@@ -10,7 +10,7 @@
            ></v-img>
          </div>
 
-         <v-form @submit.prevent="login" ref="form" lazy-validation>
+         <v-form @submit.prevent="register" ref="form" lazy-validation>
            <v-card-text>
              <h1 class="text-h4 font-weight-bold mb-6 primary--text">Welcome!</h1>
 
@@ -49,18 +49,18 @@
              ></v-text-field>
 
              <v-text-field
-               v-model="confirmPassword"
-               label="Conferma Password"
-               prepend-inner-icon="mdi-lock-check"
-               outlined
-               rounded
-               color="primary"
-               :append-icon="showPassword2 ? 'mdi-eye' : 'mdi-eye-off'"
-               :type="showPassword2 ? 'text' : 'password'"
-               @click:append="showPassword2 = !showPassword2"
-               :rules="passwordRules"
-               required
-             ></v-text-field>
+  v-model="confirmPassword"
+  label="Conferma Password"
+  prepend-inner-icon="mdi-lock-check"
+  outlined
+  rounded
+  color="primary"
+  :append-icon="showPassword2 ? 'mdi-eye' : 'mdi-eye-off'"
+  :type="showPassword2 ? 'text' : 'password'"
+  @click:append="showPassword2 = !showPassword2"
+  :rules="confirmPasswordRules"
+  required
+></v-text-field>
 
              <v-btn 
                block 
@@ -115,17 +115,28 @@ export default {
    usernameRules: [
     v => !!v || 'Username obbligatorio',
     v => v.length >=4 || 'Min 4 caratteri'
-   ]
+   ],
+   
 
  }),
 
+ computed: {
+    confirmPasswordRules() {
+      return [
+        v => !!v || 'Conferma password obbligatoria',
+        v => v === this.password || 'Le password non coincidono',
+      ]
+    }
+  },
+
  methods: {
-   async login() {
+   async register() {
      if (this.$refs.form.validate()) {
+      console.log(this.password, this.email)
        this.loading = true
        try {
          await new Promise(resolve => setTimeout(resolve, 1500))
-         this.$router.push('/dashboard')
+         //this.$router.push('/dashboard')
        } catch (error) {
          console.error('Login error:', error)
        } finally {
@@ -136,9 +147,7 @@ export default {
    forgotPassword() {
      console.log('Forgot password clicked')
    },
-   signUp() {
-     this.$router.push('/register')
-   }
+ 
  },
 
  mounted() {

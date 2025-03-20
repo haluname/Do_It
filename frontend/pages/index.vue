@@ -100,7 +100,7 @@ COLORS:
 }
 
 .right-section {
-  background-color: #ffe599;
+  background-color: #ffd966;
   padding: 2rem;
 }
 
