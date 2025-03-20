@@ -15,74 +15,8 @@
 
       <!-- Sezione destra -->
       <v-col cols="12" md="8" class="right-section d-flex align-center justify-center">
-        <v-card class="login-card" elevation="10" shaped>
-          <!-- Logo mobile -->
-          <div class="text-center mb-6 d-flex d-md-none">
-            <v-img
-              src="/img/logoBIG.svg"
-              alt="Do!t Logo"
-              max-width="120"
-              class="mobile-logo"
-            ></v-img>
-          </div>
-
-          <v-form @submit.prevent="login" ref="form" lazy-validation>
-            <v-card-text>
-              <h1 class="text-h4 font-weight-bold mb-6 primary--text">Welcome Back!</h1>
-
-              <v-text-field
-                v-model="email"
-                label="Email"
-                prepend-inner-icon="mdi-email"
-                outlined
-                rounded
-                :rules="emailRules"
-                required
-              ></v-text-field>
-
-              <v-text-field
-                v-model="password"
-                label="Password"
-                prepend-inner-icon="mdi-lock"
-                outlined
-                rounded
-                color="primary"
-                :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                :type="showPassword ? 'text' : 'password'"
-                @click:append="showPassword = !showPassword"
-                :rules="passwordRules"
-                required
-              ></v-text-field>
-
-              <v-btn 
-                block 
-                x-large 
-                color="primary" 
-                class="mt-6"
-                type="submit"
-                :loading="loading"
-                depressed
-                rounded
-              >
-                Login 
-              
-              </v-btn>
-
-              <!-- <div class="text-center mt-4">
-                <v-btn text small color="grey darken-1" @click="forgotPassword">
-                  Password Dimenticata?
-                </v-btn>
-              </div> -->
-            </v-card-text>
-
-            <v-divider class="mx-4"></v-divider>
-
-            <div class="text-center py-4">
-              <span class="grey--text">Non sei registrato? </span>
-              <v-btn text color="primary" @click="signUp">REGISTRATI</v-btn>
-            </div>
-          </v-form>
-        </v-card>
+        <Login v-if="isRegistered" @toggleAuth="toggle" />
+        <Register v-if="!isRegistered" @toggleAuth="toggle" />
       </v-col>
     </v-row>
   </v-container>
@@ -94,6 +28,7 @@ export default {
     email: '',
     password: '',
     showPassword: false,
+    isRegistered : true,
     loading: false,
     emailRules: [
       v => !!v || 'Email obbligatoria',
@@ -125,7 +60,10 @@ export default {
     },
     signUp() {
       this.$router.push('/register')
-    }
+    },
+    toggle() {
+      this.isRegistered = !this.isRegistered;
+    },
   },
 
   mounted() {
