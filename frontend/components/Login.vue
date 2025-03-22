@@ -101,10 +101,8 @@ export default {
     forgotPassword() {
       console.log('Forgot password clicked')
     },
-    signUp() {
-      this.$router.push('/register')
-    }
   },
+  
 
   mounted() {
     
