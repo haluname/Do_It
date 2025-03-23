@@ -147,6 +147,13 @@ methods: {
           gender: this.gender,
         });
 
+        const token = response.data.token;
+
+        localStorage.setItem('auth_token', token);
+
+        this.loading = false;
+
+        this.$router.push('/dashboard');
         console.log(response.data.message);
     
         alert("Registrazione avvenuta con successo!");

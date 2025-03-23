@@ -28,13 +28,16 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
             'gender' => $request->gender,
         ]);
 
+        $token = $user->createToken('api-token')->plainTextToken;
+
         return response()->json([
             'message' => 'Utente registrato con successo',
-            'user' => $user
+            'user' => $user,
+            'token' => $token
         ], 201);
     }
 

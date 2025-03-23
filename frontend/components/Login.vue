@@ -91,11 +91,28 @@ export default {
 
   methods: {
     async login() {
+      // Verifica se il form è valido
       if (this.$refs.form.validate()) {
-        this.loading = true
-        setTimeout(function(){
+        this.loading = true;
+
+        try {
+          // Invia la richiesta di login al backend
+          const response = await this.$axios.post('http://localhost:8000/api/login', {
+            email: this.email,
+            password: this.password,
+          });
+
+          const token = response.data.token;
+
+          localStorage.setItem('auth_token', token);
+
           this.loading = false;
-        }, 1000)
+
+          this.$router.push('/dashboard');
+        } catch (error) {
+          this.loading = false;
+          console.error("Errore nel login:", error);
+        }
       }
     },
     forgotPassword() {

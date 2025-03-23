@@ -18,7 +18,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function shosh(Request $request)
+    public function check(Request $request)
     {
         // Verifica se l'utente è autenticato tramite Sanctum
         if (Auth::check()) {
