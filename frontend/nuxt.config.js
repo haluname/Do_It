@@ -2,7 +2,6 @@ import colors from 'vuetify/es5/util/colors'
 
 export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
-  ssr: false,
 
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
@@ -25,7 +24,10 @@ export default {
   },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
-  
+  modules: [
+    '@nuxtjs/axios',
+    '@nuxtjs/auth-next'
+  ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
@@ -40,10 +42,44 @@ export default {
     '@nuxtjs/vuetify'
   ],
 
+
+  axios: {
+    baseURL: 'http://localhost:8000',
+    credentials: true
+  },
+
   // Modules: https://go.nuxtjs.dev/config-modules
-  modules: [
-    '@nuxtjs/axios'
-  ],
+  auth: {
+    strategies: {
+      'laravelSanctum': {
+        provider: 'laravel/sanctum',
+        url: 'http://localhost:8000', // URL del tuo backend Laravel
+        endpoints: {
+          login: { url: '/api/login', method: 'post' },
+          logout: { url: '/api/logout', method: 'post' },
+          user: { url: '/api/user', method: 'get' }
+        },
+        token: {
+          property: 'token',
+          global: true,
+          required: true,
+          type: 'Bearer'
+        },
+      }
+    },
+    redirect: {
+      login: '/',
+      logout: '/',
+      home: '/dashboard',
+      callback: false // Disabilita se non usi OAuth
+
+    }
+  },
+
+ 
+ 
+
+
 
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify
   vuetify: {

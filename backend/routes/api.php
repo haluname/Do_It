@@ -11,30 +11,10 @@ use Illuminate\Support\Facades\Log;
 
 
 
-
-Route::get('/user', function (Request $request) {
-    return response()->json(['user' => Auth::user()]);
-})->middleware('auth');
-
-Route::get('/users', [UserController::class, 'index']);
-
 Route::post('/register', [AuthController::class, 'register']);
-
 Route::post('/login', [AuthController::class, 'login']);
-
-Route::post('/logout', [AuthController::class, 'logout']);
-
-Route::get("/check", [UserController::class, 'check'])->middleware('auth:sanctum');
-
-
-
-Route::get('/prova', function (Request $request) {
-    return response()->json(['user' => Auth::user()]);
-});
-
-
-
-
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
 
 

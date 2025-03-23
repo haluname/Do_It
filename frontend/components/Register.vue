@@ -147,14 +147,16 @@ methods: {
           gender: this.gender,
         });
 
-        const token = response.data.token;
 
-        localStorage.setItem('auth_token', token);
+        await this.$auth.loginWith('laravelSanctum', {
+            data: { 
+          email: this.email,
+          password: this.password,
+        }
+        })
 
-        this.loading = false;
+        this.$router.push('/dashboard')
 
-        this.$router.push('/dashboard');
-        console.log(response.data.message);
     
         alert("Registrazione avvenuta con successo!");
       } catch (error) {

@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Hash;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
-    use HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
