@@ -1,11 +1,7 @@
 @font-face {
-    font-family: 'Uto-Bold';
-    src: url('@/assets/fonts/Uto-Bold.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-  }
-  
-  body {
-    font-family: 'Uto-Bold', sans-serif;
-  }
-  
+  font-family: 'Uto-Bold';
+  src: url('@/assets/fonts/Uto-Bold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+

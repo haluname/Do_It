@@ -1,121 +1,85 @@
 <template>
-     <v-card class="login-card" elevation="10" shaped>
-          <!-- Logo mobile -->
-          <div class="text-center mb-6 d-flex d-md-none">
-            <v-img
-              src="/img/logoBIG.svg"
-              alt="Do!t Logo"
-              max-width="120"
-              class="mobile-logo"
-            ></v-img>
-          </div>
+  <v-card class="login-card" elevation="10" shaped>
+    <div class="text-center mb-6 d-flex d-md-none">
+      <v-img src="/img/logoBIG.svg" alt="Do!t Logo" max-width="120" class="mobile-logo"></v-img>
+    </div>
 
-          <v-form @submit.prevent="login" ref="form" lazy-validation>
-            <v-card-text>
-              <h1 class="text-h4 font-weight-bold mb-6 primary--text">Welcome Back!</h1>
+    <v-form @submit.prevent="login" ref="form" lazy-validation>
+      <v-card-text>
+        <h1 class="text-h4 font-weight-bold mb-6 primary--text text-center title">Welcome Back!</h1>
 
-              <v-text-field
-                v-model="email"
-                label="Email"
-                prepend-inner-icon="mdi-email"
-                outlined
-                rounded
-                :rules="emailRules"
-                required
-              ></v-text-field>
+        <v-slide-y-transition>
+          <v-alert v-if="errorMessage" dense text class="mb-4 text-center custom-error">
+            <span class="caption">{{ errorMessage }}</span>
+          </v-alert>
+        </v-slide-y-transition>
 
-              <v-text-field
-                v-model="password"
-                label="Password"
-                prepend-inner-icon="mdi-lock"
-                outlined
-                rounded
-                color="primary"
-                :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                :type="showPassword ? 'text' : 'password'"
-                @click:append="showPassword = !showPassword"
-                :rules="passwordRules"
-                required
-              ></v-text-field>
+        <v-text-field v-model="email" label="Email" prepend-inner-icon="mdi-email" outlined rounded :rules="emailRules"
+          required></v-text-field>
 
-              <v-btn 
-                block 
-                x-large 
-                color="primary" 
-                class="mt-6"
-                type="submit"
-                :loading="loading"
-                depressed
-                rounded
-              >
-                Login 
-              
-              </v-btn>
+        <v-text-field v-model="password" label="Password" prepend-inner-icon="mdi-lock" outlined rounded color="primary"
+          :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'" :type="showPassword ? 'text' : 'password'"
+          @click:append="showPassword = !showPassword" :rules="passwordRules" required></v-text-field>
 
-              <!-- <div class="text-center mt-4">
-                <v-btn text small color="grey darken-1" @click="forgotPassword">
-                  Password Dimenticata?
-                </v-btn>
-              </div> -->
-            </v-card-text>
+        <v-btn block x-large color="primary" class="mt-6 white--text" type="submit" :loading="loading" depressed
+          rounded>
+          Login
+        </v-btn>
+      </v-card-text>
 
-            <v-divider class="mx-4"></v-divider>
+      <v-divider class="mx-4"></v-divider>
 
-            <div class="text-center py-4">
-              <span class="grey--text">Non sei registrato? </span>
-              <v-btn text color="primary" @click="$emit('toggleAuth')">REGISTRATI</v-btn>
-            </div>
-          </v-form>
-        </v-card>
+      <div class="text-center py-4">
+        <span class="grey--text">Non sei registrato? </span>
+        <v-btn text color="primary" @click="$emit('toggleAuth')">REGISTRATI</v-btn>
+      </div>
+    </v-form>
+  </v-card>
 </template>
-
 
 <script>
 export default {
-
   data: () => ({
     email: '',
     password: '',
     showPassword: false,
     loading: false,
+    errorMessage: '',
     emailRules: [
       v => !!v || 'Email obbligatoria',
-      v => /.+@.+\..+/.test(v) || 'l\'Email deve essere valida',
+      v => /.+@.+\..+/.test(v) || "L'Email deve essere valida",
     ],
     passwordRules: [
       v => !!v || 'Password obbligatoria',
       v => v.length >= 8 || 'Min 8 caratteri',
     ],
-
   }),
 
   methods: {
     async login() {
+      this.errorMessage = '';
+      this.loading = true;
       try {
         await this.$auth.loginWith('laravelSanctum', {
-            data: { 
-          email: this.email,
-          password: this.password,
-        }
-        })
-        this.$router.push('/dashboard')
+          data: {
+            email: this.email,
+            password: this.password,
+          },
+        });
+        this.$router.push('/dashboard');
       } catch (error) {
-        console.error('Login failed:', error)
+        this.errorMessage = 'CREDENZIALI ERRATE';
+        console.error('Login failed:', error);
+      } finally {
+        this.loading = false;
       }
     },
-    forgotPassword() {
-      console.log('Forgot password clicked')
-    },
   },
-  
-
-  mounted() {
-    
-  }
-}
+};
 </script>
 
 <style scoped>
+
 
 /*
 COLORS: 
@@ -132,6 +96,30 @@ COLORS:
 #ffd966 GIALLO SCURO
 
 */
+
+
+.custom-error {
+  background-color: #ffebee !important;
+  /* Sfondo rosso chiaro */
+  color: #c62828 !important;
+  /* Testo rosso scuro */
+  font-size: 0.8em;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-family: 'Uto-Bold', sans-serif !important;
+
+}
+
+.custom-error .v-alert__wrapper {
+  margin: 0;
+  padding: 0;
+}
+
+.title, .caption{
+  font-family: 'Uto-Bold', sans-serif !important;
+}
+
 .login-container {
   height: 100vh;
   background-color: #ffe599;
@@ -178,18 +166,18 @@ COLORS:
   .login-container {
     background-color: #fdf3e4;
   }
-  
+
   .right-section {
     background-color: transparent;
     padding: 1rem;
   }
-  
+
   .login-card {
     box-shadow: none !important;
     background-color: transparent !important;
   }
-  
-  .v-text-field >>> fieldset {
+
+  .v-text-field>>>fieldset {
     background-color: rgba(255, 255, 255, 0.8) !important;
   }
 }

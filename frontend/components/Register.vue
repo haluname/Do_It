@@ -12,7 +12,7 @@
 
        <v-form @submit.prevent="register" ref="form" lazy-validation>
          <v-card-text>
-           <h1 class="text-h4 font-weight-bold mb-6 primary--text">Welcome!</h1>
+          <h1 class="text-h4 font-weight-bold mb-6 primary--text text-center title">Welcome!</h1>
 
            <v-text-field
              v-model="username"
@@ -189,9 +189,10 @@ COLORS:
 
 */
 .login-container {
- height: 100vh;
- background-color: #efca5b;
+  height: 100vh;
+  background-color: #efca5b;
 }
+
 
 .left-section {
  background-color: #34495e;
@@ -201,6 +202,10 @@ COLORS:
 .right-section {
  background-color: #ffe599;
  padding: 2rem;
+}
+
+.title{
+  font-family: 'Uto-Bold', sans-serif !important;
 }
 
 .desktop-logo {
@@ -218,6 +223,9 @@ COLORS:
  border-radius: 20px !important;
  transition: all 0.3s ease;
  height: fit-content !important;
+ 
+  max-height: 100vh; 
+  overflow-y: auto; 
 }
 
 .social-login {
@@ -231,6 +239,7 @@ COLORS:
 }
 
 @media (max-width: 960px) {
+
  .login-container {
    background-color: #fdf3e4;
  }

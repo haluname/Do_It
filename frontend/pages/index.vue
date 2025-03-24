@@ -10,6 +10,7 @@
           max-width="300"
           contain
           class="desktop-logo"
+          eager
         ></v-img>
       </v-col>
 
@@ -67,7 +68,9 @@ export default {
   },
 
   mounted() {
-    
+    // if (this.$auth.loggedIn) {
+    //   this.$router.push('/dashboard');
+    // }
   }
 }
 </script>
@@ -92,6 +95,7 @@ COLORS:
 .login-container {
   height: 100vh;
   background-color: #ffe599;
+  
 }
 
 .left-section {

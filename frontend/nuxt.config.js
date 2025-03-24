@@ -4,7 +4,20 @@ export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
 
   // Target: https://go.nuxtjs.dev/config-target
+
+  head: {
+    link: [
+      { rel: 'preload', href: '/fonts/Uto-Bold.ttf', as: 'font', type: 'font/ttf', crossorigin: 'anonymous' },
+      { rel: 'preload', href: '/img/logoBIG.svg', as: 'image' }
+    ],
+    meta: [
+      { httpEquiv: 'Cache-Control', content: 'max-age=31536000, immutable' }
+    ]
+  },
+
   target: 'static',
+
+  css: ['@/assets/css/global.css'],
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
