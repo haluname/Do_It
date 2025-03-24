@@ -32,7 +32,8 @@
             <v-list-item-title 
               :class="{ 
                 'today-item': item.title === 'TODAY',
-                'rainbow-text': item.title === 'TODAY'
+                'rainbow-text': item.title === 'TODAY',
+                'item-list': true
               }"
             >
               {{ item.title }}
@@ -129,7 +130,7 @@ export default {
   data: () => ({
     navItems: [
       { title: 'Home', icon: 'mdi-view-dashboard', route: '/dashboard' },
-      { title: 'Projects', icon: 'mdi-folder-multiple', route: '/projects' },
+      { title: 'Goals', icon: 'mdi-folder-multiple', route: '/projects' },
       { title: 'Calendar', icon: 'mdi-calendar', route: '/calendar' },
       { title: 'TODAY', icon: 'mdi-star', route: '/today' },  // Cambiata icona a stella
     ],
@@ -150,6 +151,14 @@ export default {
 
 <style scoped>
 
+*{
+  font-family: 'Uto-Bold', sans-serif !important; 
+}
+
+.item-list{
+  font-size: 14px !important;
+}
+
 @keyframes rainbow {
   0% { color: #ff0000; }
   20% { color: #ff9900; }
@@ -160,13 +169,13 @@ export default {
 }
 
 .rainbow-text {
-  animation: rainbow 4.5s linear infinite;
+  animation: rainbow 10.5s linear infinite;
   background-clip: text;
   -webkit-background-clip: text;
 }
 
 .today-item {
-  font-size: 1.2rem !important;
+  font-size: 1.1em !important;
   font-weight: 900 !important;
   letter-spacing: 1px !important;
   text-shadow: 0 2px 4px rgba(0,0,0,0.2);
