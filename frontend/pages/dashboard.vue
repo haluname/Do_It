@@ -1,123 +1,15 @@
 <template>
   <v-app>
-    <v-navigation-drawer
-      app
-      permanent
-      width="260"
-      color="#34495e"
-      dark
-      class="nav-drawer"
-    >
-      <div class="px-4 py-6 text-center">
-        <v-img
-          src="/img/logoBIG.svg"
-          alt="Do!t Logo"
-          max-width="120"
-          class="mx-auto"
-        ></v-img>
-      </div>
-
-      <v-list dense nav class="mt-4">
-      <v-list-item-group color="#ffd166">
-        <v-list-item
-          v-for="(item, i) in navItems"
-          :key="i"
-          :to="item.route"
-          active-class="active-nav-item"
-        >
-          <v-list-item-icon>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title 
-              :class="{ 
-                'today-item': item.title === 'TODAY',
-                'rainbow-text': item.title === 'TODAY',
-                'item-list': true
-              }"
-            >
-              {{ item.title }}
-            </v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list-item-group>
-    </v-list>
-    </v-navigation-drawer>
-
-    <v-bottom-navigation
-      v-if="isMobile"
-      app
-      grow
-      color="#ffd166"
-      background-color="#34495e"
-      class="mobile-nav"
-    >
-      <v-btn
-        v-for="(item, i) in navItems"
-        :key="i"
-        :to="item.route"
-        value="recent"
-      >
-        <span 
-          class="nav-label"
-          :class="{ 
-            'today-item-mobile': item.title === 'TODAY',
-            'rainbow-text': item.title === 'TODAY'
-          }"
-        >
-          {{ item.title }}
-        </span>
-        <v-icon>{{ item.icon }}</v-icon>
-      </v-btn>
-    </v-bottom-navigation>
+    <NavBar />
 
     <v-main style="background-color: #fdf3e4;">
       <v-container class="py-8">
-        <!-- Card Content -->
-        <v-card
-          elevation="6"
-          rounded="lg"
-          class="mx-auto pa-4"
-          :class="{ 'mobile-card': isMobile }"
-          color="#fff2b8"
-        >
-          <!-- Mobile Header -->
-          <div v-if="isMobile" class="text-center mb-4">
-            <v-img
-              src="/img/logoBIG.svg"
-              alt="Do!t Logo"
-              max-width="80"
-              class="mx-auto"
-            ></v-img>
-          </div>
-
+        <v-card elevation="6" rounded="lg" class="mx-auto pa-4" color="#fff2b8">
           <div class="text-center mb-6">
-            <v-avatar :size="isMobile ? 80 : 120" color="#ffd166">
-              <v-icon dark :size="isMobile ? 40 : 64">mdi-account-circle</v-icon>
-            </v-avatar>
-            <h1 class="text-h4 mt-4 primary--text" :class="{ 'text-h5': isMobile }">
-              Welcome {{ $auth.user.name }}
-            </h1>
-            <p class="text-h6 mt-2 secondary--text" :class="{ 'text-body-1': isMobile }">
-              {{ $auth.user.email }}
-            </p>
-          </div>
-
-          <v-divider class="my-4"></v-divider>
-
-          <div class="text-center">
-            <v-btn
-              color="secondary"
-              :x-large="!isMobile"
-              large
-              rounded
-              @click="logout"
-              class="px-8"
-              :block="isMobile"
-            >
-              <v-icon left>mdi-logout</v-icon>
-              Logout
-            </v-btn>
+            <h2>Free ChatBot</h2>
+            <v-text-field v-model="userInput" label="Enter your question" solo></v-text-field>
+            <v-btn color="success" @click="sendMessage">Ask!</v-btn>
+            <div id="response" v-html="parsedResponse"></div>
           </div>
         </v-card>
       </v-container>
@@ -126,31 +18,78 @@
 </template>
 
 <script>
+import { marked } from 'marked';
+
 export default {
-  data: () => ({
-    navItems: [
-      { title: 'Home', icon: 'mdi-view-dashboard', route: '/dashboard' },
-      { title: 'Goals', icon: 'mdi-folder-multiple', route: '/projects' },
-      { title: 'Calendar', icon: 'mdi-calendar', route: '/calendar' },
-      { title: 'TODAY', icon: 'mdi-star', route: '/today' },  // Cambiata icona a stella
-    ],
-  }),
+  data() {
+    return {
+      userInput: '',
+      response: '',
+      navItems: [
+        { title: 'Home', icon: 'mdi-view-dashboard', route: '/dashboard' },
+        { title: 'Goals', icon: 'mdi-folder-multiple', route: '/projects' },
+        { title: 'Calendar', icon: 'mdi-calendar', route: '/calendar' },
+        { title: 'TODAY', icon: 'mdi-star', route: '/today' },
+      ],
+    };
+  },
   computed: {
-    isMobile() {
-      return this.$vuetify.breakpoint.smAndDown
-    }
+    parsedResponse() {
+      return marked.parse(this.response || '');
+    },
   },
   methods: {
-    async logout() {
-      await this.$auth.logout()
-      this.$router.push('/')
-    }
-  }
-}
+    async sendMessage() {
+      if (!this.userInput) {
+        this.response = 'Please enter a message.';
+        return;
+      }
+      this.response = 'Loading...';
+      try {
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer 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',
+            'HTTP-Referer': 'https://www.sitename.com',
+            'X-Title': 'SiteName',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'deepseek/deepseek-r1:free',
+            messages: [{ role: 'user', content: this.userInput }],
+          }),
+        });
+        const data = await res.json();
+        this.response = data.choices?.[0]?.message?.content || 'No response received.';
+      } catch (error) {
+        this.response = 'Error: ' + error.message;
+      }
+    },
+  },
+};
 </script>
 
 <style scoped>
-
+#response {
+  margin-top: 20px;
+  padding: 10px;
+  min-height: 50px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+::v-deep(#response h3) {
+  color: #333;
+  font-size: 1.2em;
+}
+::v-deep(#response strong) {
+  color: #d9534f;
+}
+::v-deep(#response ul) {
+  padding-left: 20px; 
+}
+::v-deep(#response li) {
+  margin-bottom: 5px;
+}
 *{
   font-family: 'Uto-Bold', sans-serif !important; 
 }
@@ -169,7 +108,7 @@ export default {
 }
 
 .rainbow-text {
-  animation: rainbow 10.5s linear infinite;
+  animation: rainbow 10.5s linear infinite; 
   background-clip: text;
   -webkit-background-clip: text;
 }
@@ -187,18 +126,10 @@ export default {
   margin-top: 2px !important;
 }
 
-/* Adatta l'icona TODAY */
-.v-list-item[to="/today"] .v-icon {
-  color: #ffd166 !important;
-  transform: scale(1.1);
-}
+
 
 /* Effetto hover per TODAY */
-.v-list-item[to="/today"]:hover {
-  background-color: #2c3e56 !important;
-  transform: scale(1.02);
-  transition: all 0.3s ease;
-}
+
 
 /* Mobile specific adjustments */
 .mobile-nav .rainbow-text {
@@ -209,9 +140,7 @@ export default {
   color: #ffd166 !important;
   transform: scale(1.2);
 }
-.nav-drawer {
-  border-right: 3px solid #ffc641 !important;
-}
+
 
 .active-nav-item {
   background-color: #2c3e56 !important;
@@ -219,9 +148,6 @@ export default {
   border-left: 4px solid #ffd166;
 }
 
-.v-list-item:hover {
-  background-color: #2c3e56 !important;
-}
 
 .primary--text {
   color: #34495e !important;
