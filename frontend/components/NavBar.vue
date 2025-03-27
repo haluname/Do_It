@@ -60,19 +60,45 @@
     </v-navigation-drawer>
 
     <!-- Bottom Navigation per mobile -->
-    <v-bottom-navigation v-if="isMobile" app fixed color="#34495e" grow>
-      <v-btn 
-        v-for="(item, i) in navItems" 
-        :key="i" 
-        :to="item.route" 
-        class="mobile-nav-btn"
+    <v-bottom-navigation 
+    v-if="isMobile" 
+    app 
+    fixed 
+    color="#34495e" 
+    grow
+    class="mobile-nav"
+    :value="activeIndex"
+  >
+    <v-btn 
+      v-for="(item, i) in navItems" 
+      :key="i" 
+      :to="item.route" 
+      class="mobile-nav-btn"
+      :active-class="'active-mobile-item'"
+    >
+      <v-icon :class="{'mobile-icon-active': $route.path === item.route}">
+        {{ item.icon }}
+      </v-icon>
+      <span 
+        class="nav-label"
+        :class="{'label-active': $route.path === item.route}"
       >
-        <v-icon>{{ item.icon }}</v-icon>
-        <span class="nav-label">{{ item.title }}</span>
-      </v-btn>
-    </v-bottom-navigation>
+        {{ item.title }}
+      </span>
+    </v-btn>
+
+    <!-- Logout Mobile -->
+    <v-btn 
+      class="mobile-nav-btn"
+      @click="logout"
+    >
+      <v-icon color="#ff6b6b">mdi-logout</v-icon>
+      <span class="nav-label">Logout</span>
+    </v-btn>
+  </v-bottom-navigation>
   </div>
 </template>
+
 
 <script>
 export default {
@@ -87,6 +113,11 @@ export default {
       isMobile: false,
     };
   },
+  computed: {
+    activeIndex() {
+      return this.navItems.findIndex(item => this.$route.path === item.route);
+    }
+  },
   methods: {
     async logout() {
       await this.$auth.logout()
@@ -96,12 +127,18 @@ export default {
       this.isMobile = window.innerWidth <= 960;
     },
   },
-  // ... resto dello script rimane uguale
+  mounted() {
+    this.checkScreenSize(); // Verifica la dimensione dello schermo al momento del montaggio
+    window.addEventListener('resize', this.checkScreenSize); // Aggiungi un listener per il ridimensionamento
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.checkScreenSize); // Rimuovi il listener quando il componente è distrutto
+  },
 };
 </script>
 
+
 <style scoped>
-/* Aggiungi questi stili */
 .logout-container {
   position: absolute;
   bottom: 20px;
@@ -126,34 +163,94 @@ export default {
   font-size: 0.9rem !important;
 }
 
-/* Logout Style */
-.logout-item {
-  margin-top: 20px;
-  border-left: 4px solid transparent;
+.mobile-nav {
+  border-top: 3px solid #ffd166 !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(5px);
+  background: rgba(52, 73, 94, 0.98) !important;
+}
+
+.mobile-nav-btn {
+  min-width: 70px;
+  padding: 8px 5px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-direction: column;
+  height: auto !important;
+}
+
+.mobile-nav-btn .v-icon {
+  font-size: 26px;
+  margin-bottom: 2px;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.nav-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
   transition: all 0.3s ease;
 }
 
-.logout-item:hover {
-  background-color: #2c3e56 !important;
-  border-left-color: #ff6b6b;
+.active-mobile-item {
+  background: linear-gradient(0deg, rgba(255,209,102,0.15) 0%, rgba(255,209,102,0) 100%) !important;
 }
 
-.logout-text {
+.active-mobile-item .v-icon {
+  color: #ffd166 !important;
+  filter: drop-shadow(0 2px 4px rgba(255, 209, 102, 0.3));
+}
+
+.active-mobile-item .nav-label {
+  color: #ffd166 !important;
+  font-weight: 700 !important;
+  opacity: 1;
+  transform: translateY(1px);
+}
+
+.mobile-nav-btn:not(.active-mobile-item):hover {
+  background-color: rgba(44, 62, 86, 0.6) !important;
+}
+
+.mobile-nav-btn:not(.active-mobile-item):hover .v-icon {
+  transform: scale(1.05);
+}
+
+.mobile-icon-active {
+  animation: icon-pulse 0.6s ease;
+}
+
+@keyframes icon-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.label-active {
+  animation: label-pop 0.3s ease;
+}
+
+@keyframes label-pop {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+/* Logout Mobile */
+.mobile-nav-btn:last-child .v-icon {
   color: #ff6b6b !important;
-  font-weight: 500;
-  letter-spacing: 0.5px;
 }
 
-.v-list-item--active.logout-item {
-  background-color: transparent !important;
+.mobile-nav-btn:last-child:hover .v-icon {
+  animation: shake 0.6s ease;
 }
 
-/* Mobile Logout Icon */
-.mobile-nav-btn .v-icon {
-  transition: transform 0.2s ease;
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
-.mobile-nav-btn:active .v-icon {
-  transform: scale(1.1);
-}
+
 </style>
