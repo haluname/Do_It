@@ -43,25 +43,6 @@ export default {
   }),
 
   methods: {
-    async login() {
-      if (this.$refs.form.validate()) {
-        this.loading = true
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1500))
-          this.$router.push('/dashboard')
-        } catch (error) {
-          console.error('Login error:', error)
-        } finally {
-          this.loading = false
-        }
-      }
-    },
-    forgotPassword() {
-      console.log('Forgot password clicked')
-    },
-    signUp() {
-      this.$router.push('/register')
-    },
     toggle() {
       this.isRegistered = !this.isRegistered;
     },
