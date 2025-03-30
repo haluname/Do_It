@@ -5,7 +5,6 @@
       v-if="!isMobile"
       app 
       permanent 
-      width="260" 
       color="#34495e" 
       dark 
       class="nav-drawer"
@@ -13,6 +12,24 @@
       <div class="px-4 py-6 text-center">
         <v-img src="/img/logoBIG.svg" alt="Do!t Logo" max-width="120" class="mx-auto"></v-img>
       </div>
+
+      <v-chip 
+        class="mx-auto my-4" 
+        color="primary" 
+        dark 
+        label 
+        style="font-weight: 600; font-size: 1.1rem;"
+      >
+      <v-avatar size="40" class="mr-3 rounded-circle" style="border: 2px solid #ffd166;">
+        <span 
+          style="text-transform: uppercase;"
+        >
+          {{ $auth.user.name[0] }}
+        </span>
+
+        </v-avatar>
+        Ciao, {{ $auth.user.name }}
+      </v-chip>
 
       <v-list dense nav class="mt-4">
         <v-list-item-group color="#ffd166">
@@ -61,44 +78,43 @@
 
     <!-- Bottom Navigation per mobile -->
     <v-bottom-navigation 
-    v-if="isMobile" 
-    app 
-    fixed 
-    color="#34495e" 
-    grow
-    class="mobile-nav"
-    :value="activeIndex"
-  >
-    <v-btn 
-      v-for="(item, i) in navItems" 
-      :key="i" 
-      :to="item.route" 
-      class="mobile-nav-btn"
-      :active-class="'active-mobile-item'"
+      v-if="isMobile" 
+      app 
+      fixed 
+      color="#34495e" 
+      grow
+      class="mobile-nav"
+      :value="activeIndex"
     >
-      <v-icon :class="{'mobile-icon-active': $route.path === item.route}">
-        {{ item.icon }}
-      </v-icon>
-      <span 
-        class="nav-label"
-        :class="{'label-active': $route.path === item.route}"
+      <v-btn 
+        v-for="(item, i) in navItems" 
+        :key="i" 
+        :to="item.route" 
+        class="mobile-nav-btn"
+        :active-class="'active-mobile-item'"
       >
-        {{ item.title }}
-      </span>
-    </v-btn>
+        <v-icon :class="{'mobile-icon-active': $route.path === item.route}">
+          {{ item.icon }}
+        </v-icon>
+        <span 
+          class="nav-label"
+          :class="{'label-active': $route.path === item.route}"
+        >
+          {{ item.title }}
+        </span>
+      </v-btn>
 
-    <!-- Logout Mobile -->
-    <v-btn 
-      class="mobile-nav-btn"
-      @click="logout"
-    >
-      <v-icon color="#ff6b6b">mdi-logout</v-icon>
-      <span class="nav-label">Logout</span>
-    </v-btn>
-  </v-bottom-navigation>
+      <!-- Logout Mobile -->
+      <v-btn 
+        class="mobile-nav-btn"
+        @click="logout"
+      >
+        <v-icon color="#ff6b6b">mdi-logout</v-icon>
+        <span class="nav-label">Logout</span>
+      </v-btn>
+    </v-bottom-navigation>
   </div>
 </template>
-
 
 <script>
 export default {
@@ -107,7 +123,6 @@ export default {
       navItems: [
         { title: 'Home', icon: 'mdi-view-dashboard', route: '/dashboard' },
         { title: 'Goals', icon: 'mdi-folder-multiple', route: '/goals' },
-        { title: 'Calendar', icon: 'mdi-calendar', route: '/calendar' },
         { title: 'TODAY', icon: 'mdi-star', route: '/today' },
       ],
       isMobile: false,
@@ -137,8 +152,10 @@ export default {
 };
 </script>
 
-
 <style scoped>
+*{
+  font-family: 'Uto-Bold', sans-serif !important;
+}
 .logout-container {
   position: absolute;
   bottom: 20px;
@@ -251,6 +268,5 @@ export default {
   25% { transform: translateX(-2px); }
   75% { transform: translateX(2px); }
 }
-
 
 </style>

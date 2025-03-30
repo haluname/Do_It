@@ -1,5 +1,8 @@
 <template>
   <v-card class="login-card" elevation="10" shaped>
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000" top>
+  {{ snackbar.message }}
+</v-snackbar>
        <!-- Logo mobile -->
        <div class="text-center mb-6 d-flex d-md-none">
          <v-img
@@ -95,6 +98,7 @@
            <v-btn text color="primary" @click="$emit('toggleAuth')">ACCEDI</v-btn>
          </div>
        </v-form>
+     
      </v-card>
 </template>
 
@@ -109,6 +113,11 @@ data: () => ({
  showPassword: false,
  showPassword2: false,
  loading: false,
+ snackbar: {
+      show: false,
+      message: '',
+      color: 'error' 
+    },
  emailRules: [
    v => !!v || 'Email obbligatoria',
    v => /.+@.+\..+/.test(v) || 'l\'Email deve essere valida',
@@ -123,6 +132,8 @@ data: () => ({
  usernameRules: [
    v => !!v || 'Username obbligatorio',
    v => v.length >= 4 || 'Min 4 caratteri',
+   v => v.length <= 16 || 'Max 16 caratteri',
+
  ],
 }),
 
@@ -137,35 +148,57 @@ computed: {
 
 methods: {
   async register() {
-    if (this.$refs.form.validate()) {
-      this.loading = true;
-      try {
-        const response = await this.$axios.post("http://localhost:8000/api/register", {
-          name: this.username,
-          email: this.email,
-          password: this.password,
-          gender: this.gender,
-        });
+  if (this.$refs.form.validate()) {
+    this.loading = true;
+    try {
+      const response = await this.$axios.post("http://localhost:8000/api/register", {
+        name: this.username,
+        email: this.email,
+        password: this.password,
+        gender: this.gender,
+      });
 
+      // Mostra snackbar di successo
+      this.showSnackbar("Registrazione avvenuta con successo!", "success");
 
+      // Attendi 2 secondi prima di effettuare il login e il redirect
+      setTimeout(async () => {
         await this.$auth.loginWith('laravelSanctum', {
-            data: { 
-          email: this.email,
-          password: this.password,
+          data: { 
+            email: this.email,
+            password: this.password,
+          }
+        });
+        this.$router.push('/dashboard');
+      }, 2000);
+      
+    } catch (error) {
+      if (error.response?.status === 422) {
+        const errors = error.response.data.errors;
+        if (errors.email) {
+          this.showSnackbar("Email già in uso", "error");
         }
-        })
-
-        this.$router.push('/dashboard')
-
-    
-        alert("Registrazione avvenuta con successo!");
-      } catch (error) {
-        console.error("Errore di registrazione:", error);
-        alert(error.response?.data?.message || "Errore durante la registrazione");
-      } finally {
-        this.loading = false;
+        if (errors.name) {
+          this.showSnackbar("Nome utente già preso", "error");
+        }
+      } else {
+        this.showSnackbar(
+            error.response?.data?.message || "Errore durante la registrazione",
+            "error"
+        );
       }
+    } finally {
+      this.loading = false;
     }
+  }
+}
+
+,
+
+showSnackbar(message, color = "error") {
+    this.snackbar.message = message;
+    this.snackbar.color = color;
+    this.snackbar.show = true;
   },
 },
 };
