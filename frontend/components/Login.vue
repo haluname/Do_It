@@ -59,6 +59,13 @@ export default {
     async login() {
       this.errorMessage = '';
       this.loading = true;
+
+      const isValid = this.$refs.form.validate();
+      if (!isValid) {
+        this.loading = false;
+        return;
+      }
+
       try {
         await this.$auth.loginWith('laravelSanctum', {
           data: {
@@ -79,8 +86,6 @@ export default {
 </script>
 
 <style scoped>
-
-
 /*
 COLORS: 
 
@@ -116,7 +121,8 @@ COLORS:
   padding: 0;
 }
 
-.title, .caption{
+.title,
+.caption {
   font-family: 'Uto-Bold', sans-serif !important;
 }
 

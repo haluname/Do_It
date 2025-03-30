@@ -84,8 +84,7 @@ export default {
       login: '/',
       logout: '/',
       home: '/dashboard',
-      callback: false // Disabilita se non usi OAuth
-
+      callback: false 
     }
   },
 

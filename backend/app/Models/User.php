@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Hash;
 
 
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -48,5 +49,9 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
   
-   
+    
+    public function goals()
+    {
+        return $this->hasMany(Goal::class);
+    }
 }

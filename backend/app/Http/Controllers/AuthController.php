@@ -40,35 +40,35 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user()->load('goals'); // Carica i goals dell'utente
+        return response()->json($user);
     }
-    
+
+
 
     public function register(Request $request)
-{
-    $validatedData = $request->validate([
-        'name' => 'required|string|max:255|unique:users',
-        'email' => 'required|string|email|max:255|unique:users',
-        'password' => 'required|string|min:8|',
-        'gender' => 'required|string|max:255',
-    ]);
+    {
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|',
+            'gender' => 'required|string|max:255',
+        ]);
 
-    /** @var User $user */
-    $user = User::create([
-        'name' => $validatedData['name'],
-        'email' => $validatedData['email'],
-        'password' => Hash::make($validatedData['password']),
-        'gender' => $validatedData['gender'],
-    ]);
+        /** @var User $user */
+        $user = User::create([
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'password' => Hash::make($validatedData['password']),
+            'gender' => $validatedData['gender'],
+        ]);
 
-    // Autologin dopo la registrazione
-    Auth::login($user);
+        // Autologin dopo la registrazione
+        Auth::login($user);
 
-    return response()->json([
-        'user' => $user,
-        'token' => $user->createToken('auth_token')->plainTextToken
-    ], 201);
-}
-
-    
+        return response()->json([
+            'user' => $user,
+            'token' => $user->createToken('auth_token')->plainTextToken
+        ], 201);
+    }
 }
