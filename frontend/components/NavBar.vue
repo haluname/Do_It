@@ -24,8 +24,8 @@
         <span 
           style="text-transform: uppercase;"
         >
-          {{ $auth.user.name[0] }}
-        </span>
+        {{ $auth.user.name ? $auth.user.name[0] : '?' }}
+      </span>
 
         </v-avatar>
         Ciao, {{ $auth.user.name }}
@@ -135,6 +135,7 @@ export default {
   },
   methods: {
     async logout() {
+      sessionStorage.removeItem("isPostBack");
       await this.$auth.logout()
       this.$router.push('/')
     },

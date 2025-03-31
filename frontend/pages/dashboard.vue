@@ -16,7 +16,7 @@
     </v-main>
 
     <!-- Citazione Motivazionale -->
-    <v-card class="motivational-quote" elevation="8" rounded="xl" v-if="showQuote" @click="hideQuote">
+    <v-card class="motivational-quote" elevation="8" rounded="xl" v-if="showQuote && quote !== ''" @click="hideQuote">
       <v-icon left color="yellow darken-2">mdi-lightbulb</v-icon>
       <span>{{ quote }}</span>
     </v-card>
@@ -56,8 +56,8 @@ export default {
       userInput: '',
       response: '',
       isPlaying: false,
-      volume: 0.5, // Volume iniziale
-      quote: "Lorem, ipsum dolor sit amet consectetur adipisicing elit",
+      volume: 0.5,
+      quote: "",
       showQuote: true
     };
   },
@@ -148,13 +148,14 @@ export default {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'deepseek/deepseek-r1:free',
-            messages: [{ role: 'user', content: "Dammi una breve citazione motivazionale." }],
+            model: 'google/learnlm-1.5-pro-experimental:free',
+            messages: [{ role: 'user', content: "Scrivi una breve frase motivazionale che non hai mai scritto prima.  Evita ripetizioni." }],
           }),
         });
 
         const data = await res.json();
         this.quote = data.choices?.[0]?.message?.content || "Il successo è la somma di piccoli sforzi ripetuti giorno dopo giorno.";
+        sessionStorage.setItem("motivationalQuote", this.quote);
       } catch (error) {
         console.error("Errore nel generare la citazione:", error);
         this.quote = "Credi in te stesso e tutto sarà possibile.";
@@ -165,11 +166,12 @@ export default {
   mounted() {
     if (sessionStorage.getItem("isPostBack")) {
       console.log("La pagina è stata ricaricata o rivisitata");
+      this.quote = sessionStorage.getItem("motivationalQuote") || "Il successo è la somma di piccoli sforzi ripetuti giorno dopo giorno.";  
       
     } else {
       console.log("Primo caricamento della pagina");
       sessionStorage.setItem("isPostBack", "true");
-      //this.generateMotivationalQuote();
+      this.generateMotivationalQuote();
     }
   }
 };
@@ -184,7 +186,7 @@ export default {
 .motivational-quote {
   position: fixed;
   bottom: 20px;
-  left: 100px;
+  left: 25%;
   right: auto;
   width: 300px;
   padding: 15px;
