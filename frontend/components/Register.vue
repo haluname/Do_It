@@ -169,7 +169,7 @@ methods: {
             password: this.password,
           }
         });
-        this.$router.push('/dashboard');
+        this.$router.push('/home');
       }, 2000);
       
     } catch (error) {

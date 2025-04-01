@@ -73,7 +73,7 @@ export default {
             password: this.password,
           },
         });
-        this.$router.push('/dashboard');
+        this.$router.push('/home');
       } catch (error) {
         this.errorMessage = 'CREDENZIALI ERRATE';
         console.error('Login failed:', error);

@@ -21,7 +21,8 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-  
+    title: 'Do!t', // Il nome del sito che apparirà nella tab del browser
+
     htmlAttrs: {
       lang: 'it'
     },
@@ -32,7 +33,7 @@ export default {
       { name: 'format-detection', content: 'telephone=no' }
     ],
     link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      { rel: 'icon', type: 'image/x-icon', href: '/img/logoSMALL.svg' }
     ]
   },
 
@@ -83,7 +84,7 @@ export default {
     redirect: {
       login: '/',
       logout: '/',
-      home: '/dashboard',
+      home: '/home',
       callback: false 
     }
   },

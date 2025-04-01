@@ -142,14 +142,14 @@ export default {
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
-            Authorization: 'Bearer ',
+            Authorization: 'Bearer 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',
             'HTTP-Referer': 'https://www.sitename.com',
             'X-Title': 'SiteName',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             model: 'google/learnlm-1.5-pro-experimental:free',
-            messages: [{ role: 'user', content: "Scrivi una breve frase motivazionale che non hai mai scritto prima.  Evita ripetizioni." }],
+            messages: [{ role: 'user', content: "Scrivi una breve frase motivazionale che non hai mai scritto prima." }],
           }),
         });
 

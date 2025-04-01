@@ -121,7 +121,7 @@ export default {
   data() {
     return {
       navItems: [
-        { title: 'Home', icon: 'mdi-view-dashboard', route: '/dashboard' },
+        { title: 'Home', icon: 'mdi-view-dashboard', route: '/home' },
         { title: 'Goals', icon: 'mdi-folder-multiple', route: '/goals' },
         { title: 'TODAY', icon: 'mdi-star', route: '/today' },
       ],

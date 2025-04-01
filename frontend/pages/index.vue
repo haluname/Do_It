@@ -50,7 +50,7 @@ export default {
 
   mounted() {
     // if (this.$auth.loggedIn) {
-    //   this.$router.push('/dashboard');
+    //   this.$router.push('/home');
     // }
   }
 }
