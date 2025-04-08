@@ -120,10 +120,12 @@
 export default {
   data() {
     return {
+      // Modifica il navItems nel componente NavBar
       navItems: [
         { title: 'Home', icon: 'mdi-view-dashboard', route: '/home' },
         { title: 'Goals', icon: 'mdi-folder-multiple', route: '/goals' },
         { title: 'TODAY', icon: 'mdi-star', route: '/today' },
+        { title: 'Study Session', icon: 'mdi-timer', route: '/study-session' }
       ],
       isMobile: false,
     };
