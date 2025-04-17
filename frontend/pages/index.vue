@@ -42,17 +42,31 @@ export default {
 
   }),
 
+  mounted() {
+    this.checkAuthStatus();
+  },
   methods: {
+    checkAuthStatus() {
+      if (this.$auth.loggedIn) {
+        this.$router.push('/home');
+      }
+    },
+    
     toggle() {
       this.isRegistered = !this.isRegistered;
-    },
+      this.checkAuthStatus();
+    }
   },
 
-  mounted() {
-    // if (this.$auth.loggedIn) {
-    //   this.$router.push('/home');
-    // }
-  }
+  watch: {
+    '$auth.loggedIn': function(newVal) {
+      if (newVal) {
+        this.$router.push('/home');
+      }
+    }
+  },
+
+
 }
 </script>
 

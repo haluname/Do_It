@@ -98,6 +98,7 @@ export default {
       const audio = this.$refs.audioPlayer;
       if (this.isPlaying) {
         audio.pause();
+        console.log("Ciao")
       } else {
         audio.volume = 0; // Inizia silenzioso per il fade-in
         audio.play();
@@ -157,7 +158,7 @@ export default {
         this.quote = data.choices?.[0]?.message?.content || "Il successo è la somma di piccoli sforzi ripetuti giorno dopo giorno.";
         sessionStorage.setItem("motivationalQuote", this.quote);
       } catch (error) {
-        console.error("Errore nel generare la citazione:", error);
+        console.error("Errore nel generare la citazione:", error);  
         this.quote = "Credi in te stesso e tutto sarà possibile.";
       }
     }

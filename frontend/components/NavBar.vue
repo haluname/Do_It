@@ -9,9 +9,9 @@
       dark 
       class="nav-drawer"
     >
-      <div class="px-4 py-6 text-center">
+      <NuxtLink :to="`/home`" class="px-4 py-6 text-center">
         <v-img src="/img/logoBIG.svg" alt="Do!t Logo" max-width="120" class="mx-auto"></v-img>
-      </div>
+      </NuxtLink>
 
       <v-chip 
         class="mx-auto my-4" 

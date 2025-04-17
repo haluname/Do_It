@@ -240,9 +240,9 @@ export default {
         exp: new Date().toISOString().substr(0, 10)
       },
       priorityOptions: [
-        { text: 'Alta', value: 1 },
-        { text: 'Media', value: 2 },
-        { text: 'Bassa', value: 3 }
+        { text: 'Alta', value: 2 },
+        { text: 'Media', value: 1 },
+        { text: 'Bassa', value: 0 }
       ]
     };
   },
@@ -290,14 +290,14 @@ export default {
       return new Date(date).toLocaleDateString('it-IT', options);
     },
     priorityLabel(priority) {
-      const labels = { 1: 'Alta', 2: 'Media', 3: 'Bassa' };
+      const labels = { 2: 'Alta', 1: 'Media', 0: 'Bassa' };
       return labels[priority] || 'Sconosciuta';
     },
     priorityColor(priority) {
-      return { 1: 'red', 2: 'orange', 3: 'green' }[priority] || 'gray';
+      return { 2: 'red', 1: 'orange', 0: 'green' }[priority] || 'gray';
     },
     priorityClass(priority) {
-      return { 1: 'high-priority', 2: 'medium-priority', 3: 'low-priority' }[priority] || '';
+      return { 2: 'high-priority', 1: 'medium-priority', 0: 'low-priority' }[priority] || '';
     },
 
     openAddDialog() {
@@ -321,7 +321,7 @@ export default {
           exp: this.newGoal.exp
         });
 
-        this.goals.unshift(response.data);
+        this.goals.push(response.data);
         this.showSnackbar('Goal creato con successo', 'success');
         this.closeAddDialog();
       } catch (error) {
