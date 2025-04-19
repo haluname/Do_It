@@ -20,7 +20,6 @@ class UserController extends Controller
 
     public function check(Request $request)
     {
-        // Verifica se l'utente è autenticato tramite Sanctum
         if (Auth::check()) {
             return response()->json([
                 'message' => 'Accesso consentito',

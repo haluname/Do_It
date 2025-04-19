@@ -10,7 +10,7 @@ class GoalController extends Controller
 {
     public function index()
     {
-        $goals = Auth::user()->goals;
+        $goals = Auth::user()->goals()->with('tasks')->get();
         return response()->json($goals);
     }
 
@@ -33,7 +33,7 @@ class GoalController extends Controller
     // Mostra un obiettivo specifico
     public function show($id)
     {
-        $goal = Auth::user()->goals()->find($id);
+        $goal = Auth::user()->goals()->with('tasks')->find($id);
         
         if (!$goal) {
             return response()->json(['message' => 'Goal not found'], 404);
@@ -59,6 +59,7 @@ class GoalController extends Controller
         ]);
 
         $goal->update($request->all());
+
 
         return response()->json($goal);
     }

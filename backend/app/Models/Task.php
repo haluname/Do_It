@@ -5,25 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Goal extends Model
+class Task extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'goal_id',
         'title',
-        'priority',
         'description',
         'exp'
     ];
 
-    public function user()
+    protected $casts = [
+        'exp' => 'date'
+    ];
+
+    public function goal()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Goal::class);
     }
 
-    public function tasks()
-    {
-        return $this->hasMany(Task::class);
-    }
 }

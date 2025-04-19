@@ -25,7 +25,6 @@
             <v-col v-for="goal in goals" :key="goal.id" cols="12" md="3">
               <NuxtLink :to="`/goals/${goal.id}`" style="text-decoration: none;">
                 <v-card class="goal-card" :class="priorityClass(goal.priority)" elevation="6" hover>
-                
                   <v-card-title class="goal-title">
                     {{ goal.title }}
                   </v-card-title>
@@ -40,6 +39,54 @@
                       <v-icon color="red">mdi-calendar</v-icon>
                       Scadenza: {{ formatDate(goal.exp) }}
                     </p>
+
+                    <!-- Sezione Task -->
+                    <v-divider class="my-3"></v-divider>
+                    <div class="task-section" v-if="goal.tasks && goal.tasks.length">
+
+                      <v-list dense class="task-list">
+                        <v-list-item 
+                          v-for="task in goal.tasks" 
+                          :key="task.id"
+                          class="px-0"
+                        >
+                          <v-list-item-icon class="mr-2">
+                            <v-checkbox
+                              @click.stop.prevent="deleteTask(task)"
+                              dense
+                              hide-details
+                              color="error"
+                            ></v-checkbox>
+                          </v-list-item-icon>
+                          <v-list-item-content>
+                            <v-list-item-title 
+                            style="font-size: 0.9rem; white-space: normal; word-break: break-word;"
+                            >
+                              {{ task.title }}
+                            </v-list-item-title>
+                          </v-list-item-content>
+                        </v-list-item>
+                      </v-list>
+
+                      <div 
+                        v-if="goal.tasks.length > 3" 
+                        class="text-caption text-right grey--text mt-1"
+                      >
+                        <NuxtLink :to="`/goals/${goal.id}`">
+                          + altri {{ goal.tasks.length - 3 }} task...
+                        </NuxtLink>
+                      </div>
+                    </div>
+
+                    <v-alert
+                      v-else
+                      type="info"
+                      color="amber lighten-4"
+                      dense
+                      class="mt-2"
+                    >
+                      Nessun task presente
+                    </v-alert>
                   </v-card-text>
                   <v-card-actions class="justify-end pa-2">
                     <v-btn icon @click.prevent="openDeleteDialog(goal.id)">
@@ -308,7 +355,23 @@ export default {
       this.addDialog = false;
       this.$refs.addForm.reset();
     },
-
+    async deleteTask(task) {
+    try {
+      await this.$axios.delete(`http://localhost:8000/api/tasks/${task.id}`);
+      
+      this.goals.forEach(goal => {
+        if (goal.tasks) {
+          const index = goal.tasks.findIndex(t => t.id === task.id);
+          if (index !== -1) goal.tasks.splice(index, 1);
+        }
+      });
+      
+      this.showSnackbar('Task rimossa con successo!', 'success');
+    } catch (error) {
+      console.error('Errore nell\'eliminazione del task:', error);
+      this.showSnackbar('Errore durante l\'eliminazione del task', 'error');
+    }
+  },
     async saveGoal() {
       if (!this.$refs.addForm.validate()) return;
 
@@ -332,6 +395,8 @@ export default {
       }
     },
   },
+
+
 };
 </script>
 
@@ -339,6 +404,43 @@ export default {
 * {
   font-family: "Uto-Bold", sans-serif !important;
 
+}
+.v-main {
+  overflow-y: auto !important;
+  height: 100vh;
+}
+
+.v-container {
+  min-height: calc(100vh - 64px); /* 64px è l'altezza della navbar */
+  overflow-y: visible !important;
+}
+
+/* Modifica la riga esistente */
+.v-row {
+  min-height: 100%;
+  align-content: flex-start;
+}
+
+.task-section {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 12px;
+}
+
+
+.task-list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.task-list .v-list-item {
+  min-height: 40px;
+}
+
+.completed-task {
+  opacity: 0.7;
+  background-color: #f5f5f5;
 }
 
 /* Aggiungi questo stile per il pulsante */
@@ -462,6 +564,10 @@ export default {
 
 .v-btn--fab:active {
   transform: rotate(90deg) scale(0.9);
+}
+
+.v-checkbox >>> .v-icon {
+  color: #ff5252 !important; /* Colore rosso per l'icona */
 }
 
 </style>

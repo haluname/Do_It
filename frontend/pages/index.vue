@@ -25,6 +25,8 @@
 
 <script>
 export default {
+  middleware: 'guest',
+
   data: () => ({
     email: '',
     password: '',
@@ -42,9 +44,9 @@ export default {
 
   }),
 
-  mounted() {
-    this.checkAuthStatus();
-  },
+  // mounted() {
+  //   this.checkAuthStatus();
+  // },
   methods: {
     checkAuthStatus() {
       if (this.$auth.loggedIn) {
@@ -87,6 +89,8 @@ COLORS:
 #ffd966 GIALLO SCURO
 
 */
+
+
 .login-container {
   height: 100vh;
   background-color: #ffe599;
