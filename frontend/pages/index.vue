@@ -20,7 +20,29 @@
         <Register v-if="!isRegistered" @toggleAuth="toggle" />
       </v-col>
     </v-row>
+    <span class="text-caption grey--text text--darken-1 mx-auto">
+        © {{ new Date().getFullYear() }} Do!t. Tutti i diritti riservati.
+      </span>
+      <v-snackbar 
+      v-model="snackbar" 
+      :color="snackbarColor" 
+      timeout="3000" 
+      top 
+      shaped 
+      elevation="6"
+    >
+      <div class="d-flex align-center">
+        <v-icon left dark>{{ snackbarIcon }}</v-icon>
+        {{ snackbarText }}
+      </div>
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="snackbar = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
+ 
 </template>
 
 <script>
@@ -33,6 +55,7 @@ export default {
     showPassword: false,
     isRegistered : true,
     loading: false,
+    
     emailRules: [
       v => !!v || 'Email obbligatoria',
       v => /.+@.+\..+/.test(v) || 'l\'Email deve essere valida',
@@ -41,6 +64,10 @@ export default {
       v => !!v || 'Password obbligatoria',
       v => v.length >= 8 || 'Min 8 caratteri',
     ],
+    snackbar: false,
+    snackbarText: '',
+    snackbarColor: 'success',
+    snackbarIcon: 'mdi-check-circle'
 
   }),
 
@@ -57,6 +84,14 @@ export default {
     toggle() {
       this.isRegistered = !this.isRegistered;
       this.checkAuthStatus();
+    },
+    showResetSuccess() {
+      this.snackbarText = 'Password resettata con successo!'
+      this.snackbarColor = 'success'
+      this.snackbarIcon = 'mdi-check-circle'
+      this.snackbar = true
+      
+      this.$router.replace({ query: null })
     }
   },
 
@@ -64,6 +99,14 @@ export default {
     '$auth.loggedIn': function(newVal) {
       if (newVal) {
         this.$router.push('/home');
+      }
+    },
+    '$route.query': {
+      immediate: true,
+      handler(query) {
+        if (query.passwordReset) {
+          this.showResetSuccess()
+        }
       }
     }
   },

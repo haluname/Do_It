@@ -33,8 +33,12 @@
         <span class="grey--text">Non sei registrato? </span>
         <v-btn text color="primary" @click="$emit('toggleAuth')">REGISTRATI</v-btn>
       </div>
+      <div class="text-center py-2">
+  <v-btn text color="primary" @click="$router.push('/forgot-password')">Password dimenticata?</v-btn>
+</div>  
     </v-form>
   </v-card>
+     
 </template>
 
 <script>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\OtpController as AuthOtpController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GoalController;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\OtpController;
 
 
 
@@ -17,7 +19,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
-
+Route::post('/password/otp', [OtpController::class, 'sendOtp']);
+Route::post('/password/reset-with-otp', [OtpController::class, 'resetWithOtp']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
