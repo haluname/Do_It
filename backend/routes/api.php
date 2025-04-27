@@ -19,10 +19,13 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+
 Route::post('/password/otp', [OtpController::class, 'sendOtp']);
 Route::post('/password/reset-with-otp', [OtpController::class, 'resetWithOtp']);
+Route::post('/verify-otp', [OtpController::class, 'verifyRegistrationOtp']);
 
-Route::middleware('auth:sanctum')->group(function () {
+
+Route::middleware('auth:sanctum')->group(function () {  
 
     // CRUD Goals
     Route::get('/goals', [GoalController::class, 'index']);

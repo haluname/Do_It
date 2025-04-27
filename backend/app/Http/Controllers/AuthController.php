@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PasswordResetOtpMail;
+use App\Models\PasswordResetOtp;
+use App\Models\TempUser;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Mail;
 
 class AuthController extends Controller
 {
@@ -48,27 +53,48 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|',
-            'gender' => 'required|string|max:255',
+
+        $request->validate([
+            'name' => 'required|string|max:255|unique:users,name|unique:temp_users,name',
+            'email' => 'required|string|email|max:255|unique:users,email|unique:temp_users,email',
+            'password' => 'required|string|min:8',
+            'gender' => 'required|string|in:Male,Female'
+        ]);
+    
+        $tempUser = TempUser::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'gender' => $request->gender
         ]);
 
-        /** @var User $user */
-        $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
-            'gender' => $validatedData['gender'],
-        ]);
 
-        // Autologin dopo la registrazione
-        Auth::login($user);
+        $this->sendVerification($tempUser);
 
         return response()->json([
-            'user' => $user,
-            'token' => $user->createToken('auth_token')->plainTextToken
-        ], 201);
+            'message' => 'OTP inviato con successo',
+            'email' => $tempUser->email
+        ]);
+    }
+
+    public function sendVerification(TempUser $user)
+    {
+
+        PasswordResetOtp::where('email', $user->email)->delete();
+
+        $otp = strtoupper(Str::random(6));
+        $expiresAt = now()->addMinutes(15);
+
+        PasswordResetOtp::updateOrCreate(
+            ['email' => $user->email],
+            [
+                'code' => Hash::make($otp),
+                'expires_at' => $expiresAt,
+            ]
+        );
+
+        Mail::to($user->email)->send(new PasswordResetOtpMail($otp , 'verify'));
+
+        return response()->json(['message' => 'Nuovo OTP inviato']);
     }
 }

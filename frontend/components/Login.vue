@@ -159,7 +159,7 @@ COLORS:
   padding: 2rem;
   border-radius: 20px !important;
   transition: all 0.3s ease;
-  height: 500px;
+  height: fit-content !important;
 }
 
 .social-login {

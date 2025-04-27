@@ -148,50 +148,44 @@ computed: {
 
 methods: {
   async register() {
-  if (this.$refs.form.validate()) {
-    this.loading = true;
-    try {
-      const response = await this.$axios.post("http://localhost:8000/api/register", {
-        name: this.username,
-        email: this.email,
-        password: this.password,
-        gender: this.gender,
-      });
+    if (this.$refs.form.validate()) {
+      this.loading = true;
+      try {
+        const response = await this.$axios.post("http://localhost:8000/api/register", {
+          name: this.username,
+          email: this.email,
+          password: this.password,
+          gender: this.gender,
+        });
 
-      // Mostra snackbar di successo
-      this.showSnackbar("Registrazione avvenuta con successo!", "success");
-
-      // Attendi 2 secondi prima di effettuare il login e il redirect
-      setTimeout(async () => {
-        await this.$auth.loginWith('laravelSanctum', {
-          data: { 
+        this.$router.push({
+          path: '/verify-otp',
+          query: {
             email: this.email,
-            password: this.password,
+            password: this.password
           }
         });
-        this.$router.push('/home');
-      }, 2000);
-      
-    } catch (error) {
-      if (error.response?.status === 422) {
-        const errors = error.response.data.errors;
-        if (errors.email) {
-          this.showSnackbar("Email già in uso", "error");
-        }
-        if (errors.name) {
-          this.showSnackbar("Nome utente già preso", "error");
-        }
-      } else {
-        this.showSnackbar(
+        
+      } catch (error) {
+        if (error.response?.status === 422) {
+          const errors = error.response.data.errors;
+          if (errors.email) {
+            this.showSnackbar("Email già in uso", "error");
+          }
+          if (errors.name) {
+            this.showSnackbar("Nome utente già preso", "error");
+          }
+        } else {
+          this.showSnackbar(
             error.response?.data?.message || "Errore durante la registrazione",
             "error"
-        );
+          );
+        }
+      } finally {
+        this.loading = false;
       }
-    } finally {
-      this.loading = false;
     }
   }
-}
 
 ,
 

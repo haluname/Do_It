@@ -11,15 +11,25 @@ class PasswordResetOtpMail extends Mailable
     use Queueable, SerializesModels;
 
     public $otp;
+    public $type;
 
-    public function __construct($otp)
+    public function __construct($otp, $type)
     {
         $this->otp = $otp;
+        $this->type = $type;
     }
 
     public function build()
     {
-        return $this->subject('Il tuo codice OTP per il reset della password')
-                    ->view('emails.password-reset-otp');
+        if ($this->type === 'reset') {
+            return $this->subject('Il tuo codice OTP per il reset della password')
+            ->view('emails.password-reset-otp');
+            
+        } elseif ($this->type === 'verify') {
+            return $this->subject('Verifica il tuo indirizzo email')
+            ->view('emails.registration-otp');
+        }
+
+       
     }
 }
