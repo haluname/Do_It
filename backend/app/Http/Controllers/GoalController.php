@@ -10,7 +10,30 @@ class GoalController extends Controller
 {
     public function index()
     {
-        $goals = Auth::user()->goals()->with('tasks')->get();
+        $goals = Auth::user()->goals()
+            ->with(['tasks' => function($query) {
+                $query->orderBy('created_at', 'asc');
+            }])
+            ->orderBy('exp', 'asc')
+            ->orderBy('priority', 'desc')
+            ->get();
+
+        return response()->json($goals);
+    }
+
+    public function today()
+    {
+        $today = date('Y-m-d');
+
+        $goals = Auth::user()->goals()
+            ->whereDate('exp', $today)
+            ->with(['tasks' => function($query) {
+                $query->orderBy('created_at', 'asc');
+            }])
+            ->orderBy('priority', 'desc')
+            ->orderBy('exp', 'asc')
+            ->get();
+
         return response()->json($goals);
     }
 

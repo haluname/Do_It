@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <NavBar />
-    <v-main style="background-color: #fdf3e4;">
+    <v-main style="background-color: #fdf3e4">
       <v-container class="py-8">
 
         <!-- Loader -->
@@ -10,94 +10,214 @@
         </v-row>
 
         <!-- Quando ha finito di caricare -->
-        <v-row v-else>
-          <!-- Nessun goal -->
-          <template v-if="goals.length === 0">
-            <v-col cols="12" class="text-center">
-              <v-alert type="info" color="amber lighten-4" border="left" elevation="2">
-                Non ci sono goals.
-              </v-alert>
-            </v-col>
-          </template>
+        <div v-else class="carousel-container">
+          <!-- Carosello Goals -->
+          <v-slide-group 
+          v-if="activeGoals.length > 0"
+          class="pa-4"
+            show-arrows
+            center-active
+          >
+            <v-slide-item
+            v-for="goal in activeGoals"
+              
+              :key="goal.id"
+              v-slot="{ toggle }"
+            >
+              <div class="carousel-item mx-2">
+                <NuxtLink 
+                  :to="`/goals/${goal.id}`" 
+                  style="text-decoration: none;"
+                  @click.native="toggle"
+                >
+                  <v-card 
+                    class="goal-card" 
+                    :class="priorityClass(goal.priority)"
+                    elevation="6" 
+                    width="300"
+                    height="400"
+                  >
+                    <v-card-title class="goal-title">
+                      {{ goal.title }}
+                    </v-card-title>
+                    <v-card-subtitle class="goal-priority">
+                      <v-chip :color="priorityColor(goal.priority)" dark>
+                        Priorità: {{ priorityLabel(goal.priority) }}
+                      </v-chip>
+                    </v-card-subtitle>
+                    <v-card-text>
+                      <p>{{ goal.description }}</p>
+                      <p class="goal-expiry">
+                        <v-icon color="red">mdi-calendar</v-icon>
+                        Scadenza: {{ formatDate(goal.exp) }}
+                      </p>
 
-          <!-- Lista goals -->
-          <template v-else>
-            <v-col v-for="goal in goals" :key="goal.id" cols="12" md="3">
-              <NuxtLink :to="`/goals/${goal.id}`" style="text-decoration: none;">
-                <v-card class="goal-card" :class="priorityClass(goal.priority)" elevation="6" hover>
-                  <v-card-title class="goal-title">
-                    {{ goal.title }}
-                  </v-card-title>
-                  <v-card-subtitle class="goal-priority">
-                    <v-chip :color="priorityColor(goal.priority)" dark>
-                      Priorità: {{ priorityLabel(goal.priority) }}
-                    </v-chip>
-                  </v-card-subtitle>
-                  <v-card-text>
-                    <p>{{ goal.description }}</p>
-                    <p class="goal-expiry">
-                      <v-icon color="red">mdi-calendar</v-icon>
-                      Scadenza: {{ formatDate(goal.exp) }}
-                    </p>
+                      <v-divider class="my-3"></v-divider>
+                      <div class="task-section" v-if="goal.tasks && goal.tasks.length">
+                        <v-list dense class="task-list">
+                          <v-list-item 
+                            v-for="task in goal.tasks" 
+                            :key="task.id"
+                            class="px-0"
+                          >
+                            <v-list-item-icon class="mr-2">
+                              <v-checkbox
+                                @click.stop.prevent="deleteTask(task)"
+                                dense
+                                hide-details
+                                color="error"
+                              ></v-checkbox>
+                            </v-list-item-icon>
+                            <v-list-item-content>
+                              <v-list-item-title 
+                                style="font-size: 0.9rem; white-space: normal; word-break: break-word;"
+                              >
+                                {{ task.title }}
+                              </v-list-item-title>
+                            </v-list-item-content>
+                          </v-list-item>
+                        </v-list>
 
-                    <!-- Sezione Task -->
-                    <v-divider class="my-3"></v-divider>
-                    <div class="task-section" v-if="goal.tasks && goal.tasks.length">
-
-                      <v-list dense class="task-list">
-                        <v-list-item 
-                          v-for="task in goal.tasks" 
-                          :key="task.id"
-                          class="px-0"
-                        >
-                          <v-list-item-icon class="mr-2">
-                            <v-checkbox
-                              @click.stop.prevent="deleteTask(task)"
-                              dense
-                              hide-details
-                              color="error"
-                            ></v-checkbox>
-                          </v-list-item-icon>
-                          <v-list-item-content>
-                            <v-list-item-title 
-                            style="font-size: 0.9rem; white-space: normal; word-break: break-word;"
-                            >
-                              {{ task.title }}
-                            </v-list-item-title>
-                          </v-list-item-content>
-                        </v-list-item>
-                      </v-list>
-
-                      <div 
-                        v-if="goal.tasks.length > 3" 
-                        class="text-caption text-right grey--text mt-1"
-                      >
-                        <NuxtLink :to="`/goals/${goal.id}`">
-                          + altri {{ goal.tasks.length - 3 }} task...
-                        </NuxtLink>
                       </div>
-                    </div>
 
-                    <v-alert
-                      v-else
-                      type="info"
-                      color="amber lighten-4"
-                      dense
-                      class="mt-2"
-                    >
-                      Nessun task presente
-                    </v-alert>
-                  </v-card-text>
-                  <v-card-actions class="justify-end pa-2">
-                    <v-btn icon @click.prevent="openDeleteDialog(goal.id)">
-                      <v-icon color="error">mdi-delete</v-icon>
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </NuxtLink>
-            </v-col>
-          </template>
-        </v-row>
+                      <v-alert
+                        v-else
+                        type="info"
+                        color="amber lighten-4"
+                        dense
+                        class="mt-2"
+                      >
+                        Nessun task presente
+                      </v-alert>
+                    </v-card-text>
+                    <v-card-actions class="justify-end pa-2">
+                      <v-btn 
+                        icon 
+                        @click.stop.prevent="completeGoal(goal.id)"
+                        color="success"
+                      >
+                        <v-icon>mdi-check-circle</v-icon>
+                      </v-btn>
+                      <v-btn icon @click.prevent="openDeleteDialog(goal.id)">
+                        <v-icon color="error">mdi-delete</v-icon>
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </NuxtLink>
+              </div>
+            </v-slide-item>
+            
+          </v-slide-group>
+          <div v-if="expiredGoals.length > 0" class="mt-12">
+      <h2 class="section-title error--text mb-4">Goals Scaduti</h2>
+      <v-slide-group class="pa-4" show-arrows center-active>
+        <v-slide-item
+  v-for="goal in expiredGoals"
+  :key="'expired-'+goal.id"
+  v-slot="{ toggle }"
+>
+  <div class="carousel-item mx-2">
+    <NuxtLink 
+      :to="`/goals/${goal.id}`" 
+      style="text-decoration: none;"
+      @click.native="toggle"
+    >
+      <v-card 
+        class="goal-card expired-card"
+        :class="priorityClass(goal.priority)"
+        elevation="6" 
+        width="300"
+        height="400"
+      >
+        <v-card-title class="goal-title">
+          {{ goal.title }}
+        </v-card-title>
+
+        <v-card-subtitle class="goal-priority">
+          <v-chip :color="priorityColor(goal.priority)" dark>
+            Priorità: {{ priorityLabel(goal.priority) }}
+          </v-chip>
+        </v-card-subtitle>
+
+        <v-card-text>
+          <p>{{ goal.description }}</p>
+          <p class="goal-expiry">
+            <v-icon color="red">mdi-calendar</v-icon>
+            Scadenza: {{ formatDate(goal.exp) }}
+          </p>
+
+          <v-divider class="my-3"></v-divider>
+
+          <div class="task-section" v-if="goal.tasks && goal.tasks.length">
+            <v-list dense class="task-list">
+              <v-list-item 
+                v-for="task in goal.tasks" 
+                :key="task.id"
+                class="px-0"
+              >
+                <v-list-item-icon class="mr-2">
+                  <v-checkbox
+                    disabled
+                    :input-value="false"
+                    dense
+                    hide-details
+                    color="grey"
+                  ></v-checkbox>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title 
+                    style="font-size: 0.9rem; white-space: normal; word-break: break-word;"
+                  >
+                    {{ task.title }}
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </div>
+
+          <v-alert
+            v-else
+            type="info"
+            color="amber lighten-4"
+            dense
+            class="mt-2"
+          >
+            Nessun task presente
+          </v-alert>
+        </v-card-text>
+
+        <v-card-actions class="justify-end pa-2">
+          <v-chip color="error" dark small class="mr-2">
+            <v-icon small left>mdi-alert</v-icon>
+            SCADUTO
+          </v-chip>
+          <v-btn icon @click.prevent="openDeleteDialog(goal.id)">
+            <v-icon color="error">mdi-delete</v-icon>
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </NuxtLink>
+  </div>
+</v-slide-item>
+
+      </v-slide-group>
+    </div>
+          <!-- Nessun goal -->
+          <v-col 
+          v-else-if="!loading && activeGoals.length === 0"
+          cols="12" 
+          class="text-center"
+        >
+            <v-alert 
+              type="info" 
+              color="amber lighten-4" 
+              border="left" 
+              elevation="2"
+            >
+              Non ci sono goals.
+            </v-alert>
+          </v-col>
+        </div>
 
 
         <v-dialog v-model="addDialog" max-width="600" persistent>
@@ -293,6 +413,26 @@ export default {
       ]
     };
   },
+  computed: {
+    expiredGoals() {
+      const today = new Date();
+      today.setHours(0,0,0,0); // Resetta l'orario per confronto corretto
+      return this.goals.filter(goal => {
+        const expDate = new Date(goal.exp);
+        expDate.setHours(0,0,0,0);
+        return expDate < today;
+      });
+    },
+    activeGoals() {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      return this.goals.filter(goal => {
+        const expDate = new Date(goal.exp);
+        expDate.setHours(0,0,0,0);
+        return expDate >= today;
+      });
+    }
+  },
   async mounted() {
     await this.fetchGoals();
   },
@@ -325,6 +465,18 @@ export default {
         this.deleting = false;
         this.deleteDialog = false;
         this.selectedGoalId = null;
+      }
+    },
+
+    async completeGoal(goalId) {
+      try {
+        await this.$axios.delete(`http://localhost:8000/api/goals/${goalId}`);
+        
+        this.goals = this.goals.filter(g => g.id !== goalId);
+        this.showSnackbar('Goal completato!', 'success');
+      } catch (error) {
+        console.error('Error completing goal:', error);
+        this.showSnackbar('Errore durante il completamento', 'error');
       }
     },
     showSnackbar(text, color) {
@@ -372,28 +524,36 @@ export default {
       this.showSnackbar('Errore durante l\'eliminazione del task', 'error');
     }
   },
-    async saveGoal() {
-      if (!this.$refs.addForm.validate()) return;
+  async saveGoal() {
+  if (!this.$refs.addForm.validate()) return;
 
-      this.saving = true;
-      try {
-        const response = await this.$axios.post('http://localhost:8000/api/goals', {
-          title: this.newGoal.title,
-          description: this.newGoal.description,
-          priority: this.newGoal.priority,
-          exp: this.newGoal.exp
-        });
+  this.saving = true;
+  try {
+    const response = await this.$axios.post('http://localhost:8000/api/goals', {
+      title: this.newGoal.title,
+      description: this.newGoal.description,
+      priority: this.newGoal.priority,
+      exp: this.newGoal.exp
+    });
 
-        this.goals.push(response.data);
-        this.showSnackbar('Goal creato con successo', 'success');
-        this.closeAddDialog();
-      } catch (error) {
-        console.error('Error creating goal:', error);
-        this.showSnackbar("Errore durante il salvataggio del goal", 'error');
-      } finally {
-        this.saving = false;
-      }
-    },
+    const newGoal = response.data;
+    const index = this.goals.findIndex(g => new Date(g.exp) > new Date(newGoal.exp));
+    if (index === -1) {
+      this.goals.push(newGoal);
+    } else {
+      this.goals.splice(index, 0, newGoal);
+    }
+
+    this.showSnackbar('Goal creato con successo', 'success');
+    this.closeAddDialog();
+  } catch (error) {
+    console.error('Error creating goal:', error);
+    this.showSnackbar("Errore durante il salvataggio del goal", 'error');
+  } finally {
+    this.saving = false;
+  }
+},
+
   },
 
 
@@ -401,6 +561,233 @@ export default {
 </script>
 
 <style scoped>
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-left: 24px;
+  border-left: 4px solid;
+  padding-left: 12px;
+}
+
+.expired-card {
+  opacity: 0.85;
+  position: relative;
+  overflow: hidden;
+}
+
+.expired-card::after {
+  content: "SCADUTO";
+  position: absolute;
+  top: -0px;
+  right: -30px;
+  background: #ff5252;
+  color: white;
+  padding: 15px 30px;
+  transform: rotate(45deg);
+  font-size: 0.8rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.expired-card .goal-title {
+  opacity: 0.7;
+}
+
+/* Aggiungi transizione per l'inserimento */
+.v-slide-group__content {
+  transition: all 0.5s ease-in-out;
+}
+
+/* Animazione per il nuovo goal */
+.goal-card.new-goal {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.expired-card .goal-expiry {
+  color: #ff5252 !important;
+  font-weight: 800;
+}
+
+.expired-card .v-chip {
+  opacity: 0.9;
+}
+
+.expired-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  opacity: 0.95;
+}
+.carousel-container {
+  margin: 0 auto;
+  padding: 60px 0;
+  min-height: 600px;
+  overflow: visible;
+  position: relative;
+}
+
+.v-slide-group {
+  overflow: visible !important;
+  padding: 20px 0;
+}
+
+.goal-card {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-radius: 16px;
+  margin: 0 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.goal-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  z-index: 3;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.carousel-item {
+  transition: all 0.3s ease;
+  margin: 15px 0;
+}
+
+.v-container {
+  overflow: visible;
+}
+
+/* Add decorative elements */
+.carousel-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, #ffecd2 0%, #6b4d43 100%);
+  opacity: 0.1;
+  border-radius: 24px;
+  z-index: 0;
+}
+
+/* Improve card styling */
+.goal-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.goal-title {
+  font-size: 1.3rem !important;
+  line-height: 1.4;
+  color: #2c3e50;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .carousel-container {
+    padding: 40px 20px;
+    min-height: 500px;
+  }
+  
+  .goal-card {
+    width: 280px !important;
+    margin: 0 8px;
+  }
+  
+  .goal-card:hover {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+@media (max-width: 600px) {
+  .carousel-container {
+    padding: 30px 15px;
+  }
+  
+  .goal-card {
+    width: 260px !important;
+  }
+}
+
+.v-slide-group__content{
+  height: fit-content !important;
+}
+
+
+/* Scrollbar personalizzata */
+.v-slide-group::-webkit-scrollbar {
+  height: 8px;
+  background-color: #f5f5f5;
+}
+
+.v-slide-group::-webkit-scrollbar-thumb {
+  background-color: #ffd166;
+  border-radius: 10px;
+}
+
+/* Frecce di navigazione */
+.v-slide-group__prev,
+.v-slide-group__next {
+  background-color: white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 50% !important;
+}
+
+.v-slide-group__prev:hover,
+.v-slide-group__next:hover {
+  background-color: #ffd166 !important;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .carousel-container {
+    padding: 0 16px;
+  }
+  
+  .goal-card {
+    width: 280px !important;
+    margin: 0 4px;
+  }
+
+  .v-slide-group::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Mantieni altri stili esistenti */
+.v-main {
+  overflow-y: auto !important;
+  height: 100vh;
+}
+
+.task-section {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 12px;
+}
+
+.high-priority {
+  border-left: 5px solid red;
+}
+
+.medium-priority {
+  border-left: 5px solid orange;
+}
+
+.low-priority {
+  border-left: 5px solid green;
+}
 * {
   font-family: "Uto-Bold", sans-serif !important;
 
@@ -464,16 +851,24 @@ export default {
 .v-card {
   display: flex;
   flex-direction: column;
-  min-height: 300px;
+  min-height: 450px !important; 
+  position: relative;
 }
 
 .v-card__text {
   flex: 1;
+  overflow-y: hidden; 
+padding-bottom: 48px;
 }
 
 .v-card__actions {
-  margin-top: auto;
-  border-radius: 0 0 8px 8px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background: linear-gradient(to bottom, transparent 0%, white 20%); /* Effetto sfumatura */
+  padding: 8px 16px !important;
+  border-top: 1px solid rgba(0,0,0,0.1);
 }
 
 /* Effetto hover per i pulsanti */
@@ -486,6 +881,7 @@ export default {
   border-radius: 12px;
   padding: 16px;
   transition: transform 0.2s ease-in-out;
+  height: fit-content;
 }
 
 .goal-card:hover {

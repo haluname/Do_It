@@ -40,7 +40,8 @@ export default {
   // Global CSS: https://go.nuxtjs.dev/config-css
   modules: [
     '@nuxtjs/axios',
-    '@nuxtjs/auth-next'
+    '@nuxtjs/auth-next',
+    'cookie-universal-nuxt',
   ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins

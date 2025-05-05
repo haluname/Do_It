@@ -30,9 +30,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // CRUD Goals
     Route::get('/goals', [GoalController::class, 'index']);
     Route::post('/goals', [GoalController::class, 'store']);
+    Route::get('/goals/today', [GoalController::class, 'today']);
     Route::get('/goals/{id}', [GoalController::class, 'show']);
     Route::put('/goals/{id}', [GoalController::class, 'update']);
     Route::delete('/goals/{id}', [GoalController::class, 'destroy']);
+
 
     Route::get('/tasks', [TaskController::class, 'index']);
     Route::post('/tasks', [TaskController::class, 'store']);

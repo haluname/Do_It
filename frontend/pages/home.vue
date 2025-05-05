@@ -91,7 +91,7 @@ export default {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-thinking-exp-1219:free',
+            model: 'meta-llama/llama-3.3-70b-instruct:free',
             messages: [{ role: 'user', content: "Scrivi una breve frase motivazionale che non hai mai scritto prima. stampa solo la frase stessa" }],
           }),
         });
