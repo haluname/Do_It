@@ -642,9 +642,15 @@ export default {
 }
 
 .goal-card {
+  height: 450px !important;
+  display: flex;
+  flex-direction: column;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   border-radius: 16px;
   margin: 0 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   position: relative;
   z-index: 1;
 }
@@ -735,6 +741,8 @@ export default {
   border-radius: 10px;
 }
 
+
+
 /* Frecce di navigazione */
 .v-slide-group__prev,
 .v-slide-group__next {
@@ -796,6 +804,8 @@ export default {
   overflow-y: auto !important;
   height: 100vh;
 }
+
+
 
 .v-container {
   min-height: calc(100vh - 64px); /* 64px è l'altezza della navbar */

@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app style="height: 100vh">
     <v-main style="background-color: #fdf3e4;">
       <v-container class="py-8">
         <!-- Loader -->
@@ -444,6 +444,10 @@ export default {
 <style scoped>
 * {
   font-family: "Uto-Bold", sans-serif !important;
+}
+
+.v-main{
+  overflow-y: auto !important;
 }
 
 .v-btn--teal {

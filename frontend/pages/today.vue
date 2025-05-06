@@ -514,15 +514,70 @@ export default {
   }
   
   .goal-card {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    border-radius: 12px;
-    margin: 0 8px;
-  }
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-radius: 12px;
+  margin: 0 8px;
+  width: min-content;
+  height: 450px !important; /* Aumentato da 400px */
+  display: flex;
+  flex-direction: column;
+}
+
+.goal-card .v-card__text {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 0;
+}
+
+.goal-card .v-card__actions {
+  padding: 8px 16px;
+  background-color: rgba(0,0,0,0.02);
+  border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.task-list {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+.goal-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  overflow-wrap: break-word;
+  padding-bottom: 8px;
+}
+
+.goal-priority {
+  padding-top: 0;
+  padding-bottom: 12px;
+}
+
+.goal-expiry {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #d32f2f;
+  margin-bottom: 12px;
+}
+
+.v-card__text > p:first-of-type {
+  margin-bottom: 12px;
+  min-height: 60px;
+}
+
+.task-section {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
   
   .goal-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
   }
+
   
   .v-slide-group::-webkit-scrollbar {
     height: 8px;
