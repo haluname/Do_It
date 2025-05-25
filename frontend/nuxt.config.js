@@ -17,6 +17,10 @@ export default {
 
   target: 'static',
 
+  publicRuntimeConfig: {
+    openrouterKey: ''
+  },
+
   css: ['@/assets/css/global.css'],
 
   // Global page headers: https://go.nuxtjs.dev/config-head

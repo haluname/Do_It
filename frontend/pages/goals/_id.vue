@@ -408,7 +408,7 @@ export default {
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
-            Authorization: 'Bearer ',
+            Authorization: `Bearer ${this.$config.openrouterKey}`,
             'HTTP-Referer': 'https://www.sitename.com',
             'X-Title': 'SiteName',
             'Content-Type': 'application/json',

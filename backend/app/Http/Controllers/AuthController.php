@@ -45,7 +45,7 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        $user = $request->user()->load('goals'); // Carica i goals dell'utente
+        $user = $request->user()->load('goals');
         return response()->json($user);
     }
 

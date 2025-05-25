@@ -4,6 +4,9 @@
 
     <v-main style="background-color: #fdf3e4;">
       <v-container class="py-8">
+            <v-row>
+
+         <v-col cols="12" md="8">
         <v-card elevation="6" rounded="lg" class="mx-auto pa-6" color="#fff2b8" max-width="600">
           <div class="text-center mb-6">
             <h2 class="notebook-title">Il mio foglio di note</h2>
@@ -17,6 +20,40 @@
             ></textarea>
           </div>
         </v-card>
+        </v-col>
+         <!-- Colonna Livello -->
+      <v-col cols="12" md="4">
+        <v-card elevation="6" class="level-card" color="#e8f5e9">
+          <div class="plant-container">
+            <img 
+              :src="currentPlantImage" 
+              alt="Plant growth" 
+              class="plant-gif"
+            >
+            <div class="level-badge">
+              Livello {{ userLevel }}
+            </div>
+          </div>
+
+          <v-card-text class="text-center">
+            <v-progress-linear
+              :value="levelProgress"
+              height="25"
+              color="light-green darken-2"
+              striped
+            >
+              <strong>{{ levelProgress }}%</strong>
+            </v-progress-linear>
+            
+            <div class="experience-info mt-2">
+              <v-chip small color="brown lighten-4">
+                {{ currentExperience }}/{{ experienceToNextLevel }} XP
+              </v-chip>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
       </v-container>
     </v-main>
 
@@ -36,9 +73,25 @@ export default {
     return {
       note: '',
       quote: "",
+      userLevel: 1,
+      currentExperience: 0,
       showQuote: true
     };
   },
+
+   computed: {
+    currentPlantImage() {
+      const stage = Math.min(Math.ceil(this.userLevel / 5), 6);
+      return `/plants/${stage}.gif`;
+    },
+    levelProgress() {
+      return ((this.currentExperience / this.experienceToNextLevel) * 100).toFixed(1);
+    },
+    experienceToNextLevel() {
+      return Math.floor(Math.pow(this.userLevel * 30, 1.5)); 
+    }
+  },
+
   methods: {
     hideQuote() {
       const quote = document.querySelector('.motivational-quote');
@@ -54,7 +107,7 @@ export default {
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
-            Authorization: 'Bearer ',
+            Authorization: `Bearer ${this.$config.openrouterKey}`,
             'HTTP-Referer': 'https://www.sitename.com',
             'X-Title': 'SiteName',
             'Content-Type': 'application/json',
@@ -74,12 +127,26 @@ export default {
       }
     }
   },
-  mounted() {
+  async mounted() {
+      await this.$auth.fetchUser();
+    this.userLevel = this.$auth.user.level;
+    this.currentExperience = this.$auth.user.experience;
     if (sessionStorage.getItem("isPostBack")) {
       this.quote = sessionStorage.getItem("motivationalQuote") || "Il successo è la somma di piccoli sforzi ripetuti giorno dopo giorno.";  
     } else {
       sessionStorage.setItem("isPostBack", "true");
       this.generateMotivationalQuote();
+    }
+  },
+
+   watch: {
+    '$auth.user': {
+      immediate: true,
+      deep: true,
+      handler(user) {
+        this.userLevel = user?.level || 1;
+        this.currentExperience = user?.experience || 0;
+      }
     }
   }
 };
@@ -89,6 +156,58 @@ export default {
 <style scoped>
 * {
   font-family: "Uto-Bold";
+}
+
+.v-container {
+    height: 100%;
+
+}
+.level-card {
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.plant-container {
+  position: relative;
+  min-height: 250px;
+  background: linear-gradient(180deg, #c8e6c9 0%, #a5d6a7 100%);
+}
+
+.plant-gif {
+  width: 100%;
+  height: 250px;
+  object-fit: contain;
+}
+
+.level-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.experience-info {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Animazioni */
+.plant-gif {
+  transition: transform 0.3s ease;
+}
+
+.plant-gif:hover {
+  transform: scale(1.05);
 }
 
 .note-paper {

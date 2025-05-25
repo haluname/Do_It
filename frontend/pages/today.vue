@@ -390,10 +390,15 @@ export default {
       });
     },
 
+
     async completeGoal(goalId) {
       try {
-        await this.$axios.delete(`http://localhost:8000/api/goals/${goalId}`);
-        
+         await this.$axios.delete(`http://localhost:8000/api/goals/${goalId}`, {
+            params: {
+              complete: 'true'
+            }
+         });         
+         
         if (!this.completedGoalIds.includes(goalId)) {
           this.completedGoalIds.push(goalId);
           this.saveCompletedGoals();

@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('files/{file}/download', [FileController::class, 'download']);
     Route::apiResource('files', FileController::class)->except(['update']);
+    Route::put("/apply-penalties", [GoalController::class, 'penalty']);
 
 });
 

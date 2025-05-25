@@ -87,18 +87,84 @@ class GoalController extends Controller
         return response()->json($goal);
     }
 
-    // Elimina un obiettivo
-    public function destroy($id)
-    {
+  public function destroy($id)
+{
+    $goal = Auth::user()->goals()->find($id);
 
-        $goal = Auth::user()->goals()->find($id);
+    if (!$goal) {
+        return response()->json(['message' => 'Goal not found'], 404);
+    }
 
-        if (!$goal) {
-            return response()->json(['message' => 'Goal not found'], 404);
+    $isCompletion = request()->query('complete') === 'true';
+
+    if ($isCompletion) {
+        $baseXp = match($goal->priority) {
+            2 => 100,
+            1 => 50,
+            0 => 25,
+            default => 0,
+        };
+
+        $createdAt = $goal->created_at;
+        $expDate = $goal->exp instanceof \Carbon\Carbon
+            ? $goal->exp
+            : \Carbon\Carbon::parse($goal->exp); // <-- questa riga ti salva in ogni caso
+
+        $completedAt = now();
+
+        $totalTimeAllotted = $expDate->diffInSeconds($createdAt);
+        $multiplier = 0;
+
+        if ($totalTimeAllotted > 0 && $completedAt->lte($expDate)) {
+            $timeRemaining = $expDate->diffInSeconds($completedAt);
+            $multiplier = $timeRemaining / $totalTimeAllotted;
         }
 
-        $goal->delete();
+        $totalXp = round($baseXp * (1 + $multiplier));
+        Auth::user()->addExperience($totalXp);
+    }
 
-        return response()->json(['message' => 'Goal deleted successfully']);
+    $goal->delete();
+    return response()->json(['message' => 'Goal deleted successfully']);
+}
+
+    public function penalty(Request $request)
+    {
+        $user = Auth::user();
+        
+   
+        
+        // Nuova logica con scalata livelli
+        $penalty = $request->penalty_points;
+        $currentLevel = $user->level;
+        $currentXp = $user->experience;
+
+        $totalXp = $currentXp;
+        for ($l = 1; $l < $currentLevel; $l++) {
+            $totalXp += pow($l * 30, 1.5);
+        }
+
+        $totalXp -= $penalty;
+
+        if ($totalXp < 0) {
+            $user->level = 1;
+            $user->experience = 0;
+        } else {
+            $newLevel = 1;
+            while ($totalXp >= pow($newLevel * 30, 1.5)) {
+                $totalXp -= pow($newLevel * 30, 1.5);
+                $newLevel++;
+            }
+            
+            $user->level = $newLevel;
+            $user->experience = $totalXp;
+        }
+
+        $user->save();
+
+        Goal::whereIn('id', $request->goal_ids)
+            ->update(['penalty_applied' => true]);
+
+        return response()->json(['message' => 'Penalties applied']);
     }
 }

@@ -28,6 +28,8 @@ class User extends Authenticatable
         'email',
         'password',
         'gender',
+        'level',
+        'experience',
     ];
 
     /**
@@ -68,5 +70,33 @@ class User extends Authenticatable
     public function files(): HasMany
     {
         return $this->hasMany(File::class);
+    }
+
+    public function addExperience(int $points)
+    {
+        $this->experience += $points;
+        
+        while(true) {
+            $required = $this->experienceToNextLevel();
+            
+            if($this->experience < $required) {
+                break;
+            }
+            
+            $this->experience -= $required;
+            $this->level++;
+        }
+        
+        $this->save();
+    }
+
+    public function experienceToNextLevel()
+    {
+        return pow($this->level * 30, 1.5);
+    }
+
+    public function currentLevelProgress()
+    {
+        return ($this->experience / $this->experienceToNextLevel()) * 100;
     }
 }

@@ -117,11 +117,7 @@
   v-slot="{ toggle }"
 >
   <div class="carousel-item mx-2">
-    <NuxtLink 
-      :to="`/goals/${goal.id}`" 
-      style="text-decoration: none;"
-      @click.native="toggle"
-    >
+  
       <v-card 
         class="goal-card expired-card"
         :class="priorityClass(goal.priority)"
@@ -196,7 +192,6 @@
           </v-btn>
         </v-card-actions>
       </v-card>
-    </NuxtLink>
   </div>
 </v-slide-item>
 
@@ -414,15 +409,13 @@ export default {
     };
   },
   computed: {
-    expiredGoals() {
-      const today = new Date();
-      today.setHours(0,0,0,0); // Resetta l'orario per confronto corretto
-      return this.goals.filter(goal => {
-        const expDate = new Date(goal.exp);
-        expDate.setHours(0,0,0,0);
-        return expDate < today;
-      });
-    },
+   expiredGoals() {
+    const today = new Date().setHours(0,0,0,0);
+    return this.goals.filter(goal => {
+      const expDate = new Date(goal.exp).setHours(0,0,0,0);
+      return expDate < today;
+    });
+  },
     activeGoals() {
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -441,6 +434,10 @@ export default {
       try {
         const res = await this.$axios.get('http://localhost:8000/api/goals');
         this.goals = res.data;
+          const expiredUnpenalized = this.expiredGoals.filter(g => !g.penalty_applied);
+    if(expiredUnpenalized.length > 0) {
+      await this.applyExpiredPenalties(expiredUnpenalized);
+    }
       } catch (error) {
         console.error('Error fetching goals:', error);
         this.showSnackbar('Errore nel caricamento dei goals', 'error');
@@ -448,6 +445,29 @@ export default {
         this.loading = false;
       }
     },
+
+    async applyExpiredPenalties(goals) {
+      try {
+        const penaltyPoints = goals.reduce((sum, g) => {
+        return sum + (g.priority === 2 ? 200 : g.priority === 1 ? 100 : 50);
+      }, 0);
+
+      const newExperience = Math.max(this.$auth.user.experience - penaltyPoints, 0);
+        
+        await this.$axios.put('http://localhost:8000/api/apply-penalties', {
+          goal_ids: goals.map(g => g.id),
+          penalty_points: penaltyPoints
+        });
+
+        await this.$auth.fetchUser();
+        
+        this.showSnackbar(`Penalità applicata per ${goals.length} goal scaduti`, 'warning');
+        
+      } catch (error) {
+        console.error('Error applying penalties:', error);
+      }
+    },
+
     openDeleteDialog(goalId) {
       this.selectedGoalId = goalId;
       this.deleteDialog = true;
@@ -470,8 +490,11 @@ export default {
 
     async completeGoal(goalId) {
       try {
-        await this.$axios.delete(`http://localhost:8000/api/goals/${goalId}`);
-        
+         await this.$axios.delete(`http://localhost:8000/api/goals/${goalId}`, {
+            params: {
+              complete: 'true'
+            }
+         });        
         this.goals = this.goals.filter(g => g.id !== goalId);
         this.showSnackbar('Goal completato!', 'success');
       } catch (error) {
@@ -479,6 +502,7 @@ export default {
         this.showSnackbar('Errore durante il completamento', 'error');
       }
     },
+
     showSnackbar(text, color) {
       this.snackbarText = text;
       this.snackbarColor = color;
