@@ -421,6 +421,7 @@ export default {
 
         const data = await res.json();
         this.response = data.choices?.[0]?.message?.content || "";
+
         const rawTasks = this.response.split('\n').filter(line => line.trim() !== '');
         this.tasks = rawTasks.map(task =>
           task.replace(/^[-*]\s+/g, '').trim()
@@ -446,8 +447,9 @@ export default {
   font-family: "Uto-Bold", sans-serif !important;
 }
 
-.v-main{
+.v-main {
   overflow-y: auto !important;
+  height: 100%;
 }
 
 .v-btn--teal {

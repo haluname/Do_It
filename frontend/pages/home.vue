@@ -4,12 +4,17 @@
 
     <v-main style="background-color: #fdf3e4;">
       <v-container class="py-8">
-        <v-card elevation="6" rounded="lg" class="mx-auto pa-4" color="#fff2b8">
+        <v-card elevation="6" rounded="lg" class="mx-auto pa-6" color="#fff2b8" max-width="600">
           <div class="text-center mb-6">
-            <h2>Bot</h2>
-            <v-text-field v-model="userInput" label="Enter your question" solo></v-text-field>
-            <v-btn color="success" @click="sendMessage">Ask!</v-btn>
-            <div id="response" v-html="parsedResponse"></div>
+            <h2 class="notebook-title">Il mio foglio di note</h2>
+          </div>
+          <div class="note-paper">
+            <textarea
+              v-model="note"
+              class="note-textarea"
+              placeholder="Scrivi qui i tuoi appunti..."
+              rows="10"
+            ></textarea>
           </div>
         </v-card>
       </v-container>
@@ -20,57 +25,21 @@
       <v-icon left color="yellow darken-2">mdi-lightbulb</v-icon>
       <span>{{ quote }}</span>
     </v-card>
-
-
   </v-app>
 </template>
 
-<script>
-import { marked } from 'marked';
 
+<script>
 export default {
   middleware: 'auth',
   data() {
     return {
-      userInput: '',
-      response: '',
+      note: '',
       quote: "",
       showQuote: true
     };
   },
-  computed: {
-    parsedResponse() {
-      return marked.parse(this.response || '');
-    },
-  },
   methods: {
-    async sendMessage() {
-      if (!this.userInput) {
-        this.response = 'Please enter a message.';
-        return;
-      }
-      this.response = 'Loading...';
-      try {
-        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: 'Bearer ',
-            'HTTP-Referer': 'https://www.sitename.com',
-            'X-Title': 'SiteName',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'deepseek/deepseek-r1:free',
-            messages: [{ role: 'user', content: this.userInput }],
-          }),
-        });
-        const data = await res.json();
-        this.response = data.choices?.[0]?.message?.content || 'No response received.';
-      } catch (error) {
-        this.response = 'Error: ' + error.message;
-      }
-    },
-
     hideQuote() {
       const quote = document.querySelector('.motivational-quote');
       quote.style.transition = 'opacity 0.5s';
@@ -104,15 +73,11 @@ export default {
         this.quote = "Credi in te stesso e tutto sarà possibile.";
       }
     }
-
   },
   mounted() {
     if (sessionStorage.getItem("isPostBack")) {
-      console.log("La pagina è stata ricaricata o rivisitata");
       this.quote = sessionStorage.getItem("motivationalQuote") || "Il successo è la somma di piccoli sforzi ripetuti giorno dopo giorno.";  
-      
     } else {
-      console.log("Primo caricamento della pagina");
       sessionStorage.setItem("isPostBack", "true");
       this.generateMotivationalQuote();
     }
@@ -120,17 +85,72 @@ export default {
 };
 </script>
 
+
 <style scoped>
-/* Posizionamento della citazione in basso a sinistra */
 * {
   font-family: "Uto-Bold";
 }
 
+.note-paper {
+  background: repeating-linear-gradient(
+    to bottom,
+    #fffde8,
+    #fffde8 29px,
+    #ffe9b7 30px
+  );
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.14);
+  padding: 25px 20px 10px 40px;
+  position: relative;
+  min-height: 280px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.notebook-title {
+  font-size: 2rem;
+  color: #6d4c41;
+  letter-spacing: 1px;
+}
+
+.note-paper::before {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ffd966;
+  opacity: 0.7;
+}
+
+.note-textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  background: transparent;
+  border: none;
+  resize: none;
+  font-size: 1.1rem;
+  color: #6d4c00;
+  font-family: 'Fira Mono', 'Consolas', monospace;
+  outline: none;
+  padding-left: 0;
+  line-height: 30px;
+  letter-spacing: 0.5px;
+}
+
+.note-textarea::placeholder {
+  color: #bfa84a;
+  opacity: 1;
+}
+
+/* Motivational quote e altro stile come prima */
 .motivational-quote {
   position: fixed;
   bottom: 20px;
   left: 25%;
-  right: auto;
   width: 300px;
   padding: 15px;
   background: linear-gradient(145deg, #fff5d6 0%, #ffd8b1 100%);
@@ -150,7 +170,6 @@ export default {
   background-color: #fee26f;
 }
 
-/* Aggiunta virgolette decorative alla citazione */
 .motivational-quote span {
   position: relative;
   display: inline-block;
@@ -171,7 +190,6 @@ export default {
   left: -5px;
   top: -15px;
   color: #ffd966;
-
 }
 
 .motivational-quote span::after {
@@ -181,24 +199,9 @@ export default {
   bottom: -25px;
 }
 
-/* Aggiunto margine extra per distanziarla dalla navbar */
 @media (max-width: 960px) {
   .motivational-quote {
     bottom: 80px;
-    /* Sposta la citazione più in alto nei dispositivi più piccoli */
   }
-}
-
-
-#response {
-  margin-top: 20px;
-  padding: 10px;
-  min-height: 50px;
-  background: #f8f9fa;
-  border-radius: 5px;
-}
-
-.v-card:hover {
-  transform: translateY(-4px);
 }
 </style>

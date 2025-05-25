@@ -8,6 +8,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Goal;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\File;
 
 
 
@@ -53,5 +56,17 @@ class User extends Authenticatable
     public function goals()
     {
         return $this->hasMany(Goal::class);
+    }
+
+    // ... altre parti della classe ...
+
+    /**
+     * Relazione con i file dell'utente
+     * 
+     * @return HasMany<File>
+     */
+    public function files(): HasMany
+    {
+        return $this->hasMany(File::class);
     }
 }

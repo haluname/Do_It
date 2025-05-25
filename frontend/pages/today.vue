@@ -549,7 +549,7 @@ export default {
 }
 
 .goal-priority {
-  padding-top: 0;
+  padding-top: 10px;
   padding-bottom: 12px;
 }
 

@@ -37,12 +37,16 @@ return [
         ],
 
         'public' => [
-            'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
-            'visibility' => 'public',
-            'throw' => false,
+              'driver' => 'local',
+        'root' => storage_path('app'),
+        'throw' => false,
         ],
+
+        'user_files' => [
+        'driver' => 'local',
+        'root' => storage_path('app/user_files'), // Percorso di storage
+        'visibility' => 'private', // File non accessibili pubblicamente
+    ],
 
         's3' => [
             'driver' => 's3',

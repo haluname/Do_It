@@ -120,12 +120,12 @@
 export default {
   data() {
     return {
-      // Modifica il navItems nel componente NavBar
       navItems: [
         { title: 'Home', icon: 'mdi-view-dashboard', route: '/home' },
         { title: 'Goals', icon: 'mdi-folder-multiple', route: '/goals' },
         { title: 'TODAY', icon: 'mdi-star', route: '/today' },
-        { title: 'Study Session', icon: 'mdi-timer', route: '/study-session' }
+        { title: 'Study Session', icon: 'mdi-timer', route: '/study-session' },
+        { title: 'Files', icon: 'mdi-archive', route: '/files' }
       ],
       isMobile: false,
     };
@@ -147,10 +147,10 @@ export default {
   },
   mounted() {
     this.checkScreenSize(); // Verifica la dimensione dello schermo al momento del montaggio
-    window.addEventListener('resize', this.checkScreenSize); // Aggiungi un listener per il ridimensionamento
+    window.addEventListener('resize', this.checkScreenSize);
   },
   beforeDestroy() {
-    window.removeEventListener('resize', this.checkScreenSize); // Rimuovi il listener quando il componente è distrutto
+    window.removeEventListener('resize', this.checkScreenSize); 
   },
 };
 </script>
@@ -257,7 +257,6 @@ export default {
   100% { transform: translateY(0); }
 }
 
-/* Logout Mobile */
 .mobile-nav-btn:last-child .v-icon {
   color: #ff6b6b !important;
 }
