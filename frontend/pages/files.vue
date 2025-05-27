@@ -2,31 +2,19 @@
     <v-app>
         <NavBar />
 
-       <v-main style="background-color: #fdf3e4;">
-      <!-- Modifica al container principale -->
-      <v-container class="py-4" style="min-height: 90vh;"> <!-- Ridotto padding e aggiunto min-height -->
-        <!-- Modifica allo slide group -->
-        <v-slide-group 
-          show-arrows 
-          class="pa-2" 
-          style="overflow: visible; min-height: 500px;"
-        >
-          <v-slide-item 
-            v-for="file in files" 
-            :key="file.id" 
-            v-slot="{ toggle }"
-            class="mb-4" 
-          >
-            <!-- Aggiunto stile alla card -->
-            <div class="carousel-item mx-2" style="margin-top: 20px; margin-bottom: 20px;"> <!-- Margini verticali -->
-              <v-card 
-                class="file-card" 
-                elevation="6" 
-                width="300"
-                style="min-height: 200px;"
-                :data-file-type="getFileType(file.mime_type)">
-              
-                                
+        <v-main style="background-color: #fdf3e4;">
+            <!-- Modifica al container principale -->
+            <v-container class="py-4" style="min-height: 90vh;"> <!-- Ridotto padding e aggiunto min-height -->
+                <!-- Modifica allo slide group -->
+                <v-slide-group show-arrows class="pa-2" style="overflow: visible; min-height: 500px;">
+                    <v-slide-item v-for="file in files" :key="file.id" v-slot="{ toggle }" class="mb-4">
+                        <!-- Aggiunto stile alla card -->
+                        <div class="carousel-item mx-2" style="margin-top: 20px; margin-bottom: 20px;">
+                            <!-- Margini verticali -->
+                            <v-card class="file-card" elevation="6" width="300" style="min-height: 200px;"
+                                :data-file-type="getFileType(file.mime_type)">
+
+
                                 <v-card-title class="file-title">
                                     <v-icon class="mr-2">{{ fileIcon(file.mime_type) }}</v-icon>
                                     {{ truncateFileName(file.original_name) }}
@@ -59,7 +47,7 @@
                             </v-card>
                         </div>
                     </v-slide-item>
-                   
+
                 </v-slide-group>
 
                 <v-btn fab dark color="primary" fixed bottom right class="mb-10 mr-10 elevation-12"
@@ -236,7 +224,7 @@ export default {
 
 <style scoped>
 * {
-    font-family: "Uto-Bold";
+    font-family: "Uto-Bold", sans-serif !important;
 }
 
 /* Nuovo design per le card */

@@ -198,6 +198,16 @@ import { marked } from 'marked';
 
 export default {
   middleware: 'auth',
+   head() {
+    return {
+      link: [
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700&display=swap'
+        }
+      ]
+    }
+  },
   data() {
     return {
       goal: null,

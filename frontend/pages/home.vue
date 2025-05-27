@@ -1,13 +1,14 @@
 <template>
   <v-app>
+
     <NavBar />
 
-    <v-main style="background-color: #fdf3e4; min-height: 100vh; overflow-y: auto;">
-      <v-container class="py-8" style="min-height: 90vh;">
+    <v-main style="background-color: #fdf3e4;">
+      <v-container class="py-8">
         <v-row>
 
           <v-col cols="12" md="8">
-            <v-card elevation="6" rounded="lg" class="mx-auto pa-6" color="#fff2b8">
+            <v-card elevation="6" rounded="lg" class="mx-auto pa-6 notebook-background" max-width="100%">
               <div class="text-center mb-6">
                 <h2 class="notebook-title">Note Settimanali</h2>
                 <v-chip class="mt-2" color="orange lighten-3">
@@ -15,17 +16,37 @@
                 </v-chip>
               </div>
 
-              <v-row>
-                <v-col v-for="(day, index) in notes" :key="index" cols="12" sm="6" md="4">
-                  <v-card class="mb-4 pa-3" elevation="2">
-                    <div class="day-header">{{ day.name }}</div>
-                    <textarea v-model="day.content" class="note-textarea" :placeholder="'Note per ' + day.name"
-                      rows="4"></textarea>
-                  </v-card>
-                </v-col>
-              </v-row>  
+              <!-- Aggiunto il contorno stile notebook -->
+              <div class="note-paper-container">
+                <v-row>
+                  <v-col v-for="(day, index) in notes" :key="index" cols="12" sm="6" md="4">
+                    <div class="day-card">
+                      <div class="day-header">{{ day.name }}</div>
 
-              <v-btn color="primary" block @click="openReportDialog" :loading="loadingReport">
+                      <!-- Pulsante registrazione -->
+                      <div class="voice-controls">
+                        <v-btn @click="toggleRecognition(index)" :color="day.isListening ? 'red' : 'primary'" x-small
+                          icon :class="{ 'pulse': day.isListening }">
+                          <v-icon>{{ day.isListening ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
+                        </v-btn>
+                        <span v-if="day.isListening" class="recording-indicator">
+                          <v-icon x-small color="red">mdi-record</v-icon>
+                          Registrazione...
+                        </span>
+                      </div>
+
+                      <!-- Textarea con anteprima trascrizione -->
+                      <textarea v-model="day.content" class="note-textarea" :placeholder="'Note per ' + day.name"
+                        rows="4"></textarea>
+                      <div v-if="day.transcript" class="transcript-preview active">
+                        Anteprima: {{ day.transcript }}
+                      </div>
+                    </div>
+                  </v-col>
+                </v-row>
+              </div>
+
+              <v-btn color="primary" block @click="openReportDialog" :loading="loadingReport" class="mt-4">
                 <v-icon left>mdi-file-chart</v-icon>
                 Ottieni Resoconto
               </v-btn>
@@ -53,6 +74,19 @@
                 </div>
               </v-card-text>
             </v-card>
+            <v-card elevation="6" class="mt-4" color="#f0e6ff">
+              <v-card-text class="text-center">
+                <v-icon x-large color="deep-purple darken-2">mdi-forum</v-icon>
+                <h3 class="mt-2 mb-4 forum-title">Community di Supporto</h3>
+                <v-btn color="deep-purple darken-2" dark large block href="/forum" class="forum-btn">
+                  <v-icon left>mdi-account-group</v-icon>
+                  ACCEDI AL FORUM
+                </v-btn>
+                <p class="mt-3 caption grey--text text--darken-1">
+                  Condividi esperienze e consigli con altri utenti
+                </p>
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
       </v-container>
@@ -63,33 +97,33 @@
       <v-icon left color="yellow darken-2">mdi-lightbulb</v-icon>
       <span>{{ quote }}</span>
     </v-card>
-   <v-dialog v-model="reportDialog" max-width="800" scrollable>
-    <v-card>
-      <v-card-title class="headline primary white--text">
-        <v-icon color="white" left>mdi-chart-box</v-icon>
-        Resoconto Settimanale - Settimana {{ currentWeek }}
-      </v-card-title>
-      
-      <v-card-text class="pa-4">
-        <div v-if="reportLoading" class="text-center py-6">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-          <div class="mt-4">Generazione resoconto in corso...</div>
-        </div>
-        
-        <div v-else class="report-content">
-          <v-icon color="green" left>mdi-text-box-check</v-icon>
-          <div class="report-text">{{ aiReport }}</div>
-        </div>
-      </v-card-text>
+    <v-dialog v-model="reportDialog" max-width="800" scrollable>
+      <v-card>
+        <v-card-title class="headline primary white--text">
+          <v-icon color="white" left>mdi-chart-box</v-icon>
+          Resoconto Settimanale - Settimana {{ currentWeek }}
+        </v-card-title>
 
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" @click="reportDialog = false">
-          Chiudi
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+        <v-card-text class="pa-4">
+          <div v-if="reportLoading" class="text-center py-6">
+            <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+            <div class="mt-4">Generazione resoconto in corso...</div>
+          </div>
+
+          <div v-else class="report-content">
+            <v-icon color="green" left>mdi-text-box-check</v-icon>
+            <div class="report-text">{{ aiReport }}</div>
+          </div>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="reportDialog = false">
+            Chiudi
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -105,18 +139,20 @@ export default {
       currentExperience: 0,
       showQuote: true,
       notes: [
-        { name: 'Lunedì', content: '' },
-        { name: 'Martedì', content: '' },
-        { name: 'Mercoledì', content: '' },
-        { name: 'Giovedì', content: '' },
-        { name: 'Venerdì', content: '' },
-        { name: 'Sabato', content: '' },
-        { name: 'Domenica', content: '' }
+        { name: 'Lunedì', content: '', isListening: false, transcript: '' },
+        { name: 'Martedì', content: '', isListening: false, transcript: '' },
+        { name: 'Mercoledì', content: '', isListening: false, transcript: '' },
+        { name: 'Giovedì', content: '', isListening: false, transcript: '' },
+        { name: 'Venerdì', content: '', isListening: false, transcript: '' },
+        { name: 'Sabato', content: '', isListening: false, transcript: '' },
+        { name: 'Domenica', content: '', isListening: false, transcript: '' }
       ],
       reportDialog: false,
+      recognition: null,
+      currentDayIndex: null,
       aiReport: '',
-      reportLoading: false, // Aggiunto loadingReport
-      loadingReport: false   // Aggiunto per il pulsante
+      reportLoading: false, 
+      loadingReport: false 
     };
   },
 
@@ -149,8 +185,8 @@ export default {
       }, 500);
     },
 
-     async openReportDialog() {
-      this.reportDialog = true; 
+    async openReportDialog() {
+      this.reportDialog = true;
       await this.generateReport();
     },
 
@@ -187,7 +223,8 @@ export default {
         console.log('Saved Week:', savedWeek);
 
         if (savedWeek === currentWeekStr) {
-          const savedNotes = localStorage.getItem('weeklyNotes');
+          const userId = this.$auth.user.id;
+          const savedNotes = localStorage.getItem(`user-${userId}-weeklyNotes`);
           console.log(savedNotes)
           if (savedNotes) {
             try {
@@ -208,17 +245,16 @@ export default {
     resetNotes() {
       this.notes = this.notes.map(day => ({ ...day, content: '' }));
       if (typeof window !== 'undefined') {
-        localStorage.setItem('weeklyNotes', JSON.stringify(this.notes));
+        const userId = this.$auth.user.id;
+        localStorage.setItem(`user-${userId}-weeklyNotes`, JSON.stringify(this.notes));
         localStorage.setItem('lastSavedWeek', this.currentWeek.toString());
       }
     },
     async generateReport() {
       this.reportLoading = true;
       try {
-        const prompt = `Analizza queste note settimanali e fornisci un resoconto sulla produttività. 
-          Rispondi in italiano in massimo 200 caratteri. Formato risposta:
-          [Punteggio 1-5]/5 - [Breve analisi in 2-3 frasi]. 
-          Ecco le note giornaliere:\n\n${this.notes.map(d => `${d.name}: ${d.content || 'Nessuna nota'}`).join('\n')}`;
+        const prompt = this.createReportPrompt();
+
 
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
@@ -240,13 +276,99 @@ export default {
         this.aiReport = "Impossibile generare il resoconto. Riprova più tardi.";
       }
       this.reportLoading = false;
+      this.notes.forEach(day => {
+        day.content = '';
+      });
+      let userId = this.$auth.user.id;
+      localStorage.removeItem(`user-${userId}-weeklyNotes`);
     },
     createReportPrompt() {
-      return `Analizza queste note settimanali e fornisci un resoconto sulla produttività. 
-        Rispondi in italiano in massimo 250 caratteri. Formato risposta il piu sincero possibile e valuta in modo oggettivo anche se non hai fatto nulla oppure se hai fatto qualcosa di ben complicato:
-        [Punteggio 1-5]/5 - [Analisi in 4-5 frasi dicendo dove posso migliorare con dei suggerimenti].
-        Ecco le note giornaliere:\n\n${this.notes.map(d => `${d.name}: ${d.content || 'Nessuna nota'}`).join('\n')}`;
+      return `Analizza queste note settimanali e fornisci un resoconto brutale sulla produttività. 
+      Valuta in modo spietato: se ho fatto poco o sempre la stessa cosa (es. solo matematica per giorni), il voto deve essere basso. Non premiare l'abitudine, valuta varietà, intensità e impatto reale del lavoro.
+
+      Rispondi in italiano, massimo 250 caratteri. Formato: 
+      [Punteggio da 0 a 10]/10 - [Analisi in qualche frase. Sii tagliente, diretto, senza giustificazioni. Sottolinea carenze, inutili ripetizioni e dove sto sprecando il tempo. Dai consigli pratici su come alzare il livello.]
+
+      Ecco le note giornaliere:\n\n${this.notes.map(d => `${d.name}: ${d.content || 'Nessuna nota'}`).join('\n')}`;
+
     },
+
+    initSpeechRecognition() {
+      if (process.client) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+          this.recognition = new SpeechRecognition();
+          this.recognition.continuous = true;
+          this.recognition.interimResults = true;
+          this.recognition.lang = 'it-IT';
+
+          this.recognition.onresult = (event) => {
+            if (this.currentDayIndex === null) return;
+
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const transcript = event.results[i][0].transcript;
+              event.results[i].isFinal ?
+                finalTranscript += transcript + ' ' :
+                interimTranscript += transcript;
+            }
+
+            const day = this.notes[this.currentDayIndex];
+            day.transcript = finalTranscript + interimTranscript;
+          };
+
+          this.recognition.onend = () => {
+
+            if (this.currentDayIndex !== null) {
+              const day = this.notes[this.currentDayIndex];
+              day.isListening = false;
+              this.currentDayIndex = null;
+            }
+          };
+        }
+      }
+    },
+
+    toggleRecognition(index) {
+      const day = this.notes[index];
+
+      // Verifica che SpeechRecognition sia disponibile
+      if (!this.recognition) {
+        this.$toast.error("Riconoscimento vocale non supportato in questo browser");
+        return;
+      }
+
+      if (day.isListening) {
+        this.recognition.stop(); // Ferma la registrazione
+        day.content = day.transcript; // Sovrascrivi il contenuto della nota con l'anteprima
+        day.transcript = ''; // Rimuovi l'anteprima
+        day.isListening = false;
+        this.currentDayIndex = null;
+
+        // Salva immediatamente in localStorage
+        this.saveNotesToLocalStorage();
+      } else {
+        if (this.currentDayIndex !== null) {
+          this.recognition.stop();
+        }
+        this.currentDayIndex = index;
+        day.transcript = '';
+        day.isListening = true;
+        this.recognition.start();
+      }
+    },
+    saveNotesToLocalStorage() {
+      if (typeof window !== 'undefined') {
+        // Salva solo se ci sono modifiche
+        if (this.notes.some(note => note.content !== '')) {
+          const userId = this.$auth.user.id;
+          localStorage.setItem(`user-${userId}-weeklyNotes`, JSON.stringify(this.notes));
+          localStorage.setItem('lastSavedWeek', this.currentWeek.toString());
+        }
+      }
+    }
   },
 
 
@@ -254,6 +376,8 @@ export default {
   async mounted() {
     await this.$auth.fetchUser();
     this.loadNotes();
+    this.initSpeechRecognition();
+
 
     this.userLevel = this.$auth.user.level;
     this.currentExperience = this.$auth.user.experience;
@@ -267,14 +391,14 @@ export default {
 
   },
 
-    watch: {
-      '$auth.user': {
-        immediate: true,
-        deep: true,
-          handler(user) {
-            this.userLevel = user?.level || 1;
-            this.currentExperience = user?.experience || 0;
-          }
+  watch: {
+    '$auth.user': {
+      immediate: true,
+      deep: true,
+      handler(user) {
+        this.userLevel = user?.level || 1;
+        this.currentExperience = user?.experience || 0;
+      }
     },
     currentWeek: {
       immediate: true,
@@ -289,7 +413,8 @@ export default {
         if (typeof window !== 'undefined') {
           // Aggiungi un controllo per evitare salvataggi inutili
           if (newNotes.some(note => note.content !== '')) {
-            localStorage.setItem('weeklyNotes', JSON.stringify(newNotes));
+            const userId = this.$auth.user.id;
+            localStorage.setItem(`user-${userId}-weeklyNotes`, JSON.stringify(newNotes));
             localStorage.setItem('lastSavedWeek', this.currentWeek.toString());
           }
         }
@@ -303,13 +428,106 @@ export default {
 
 
 <style scoped>
-* {
-  font-family: "Uto-Bold";
-}
-
 .v-main {
   overflow-y: auto !important;
   height: 100vh;
+}
+
+.notebook-background {
+  background: repeating-linear-gradient(to bottom,
+      #fffdf8,
+      #fffdf8 29px,
+      #ffe9c7 30px) !important;
+  border: 2px solid #ffc107;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.14);
+  position: relative;
+}
+
+.note-paper-container {
+  padding: 25px 20px 10px 40px;
+  position: relative;
+}
+
+.note-paper-container::before {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ffd966;
+  opacity: 0.7;
+}
+
+.notebook-title {
+  font-size: 2rem;
+  color: #6d4c41;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.day-card {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  border: solid 0.5px #ffd966;
+  padding: 15px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+  position: relative;
+  padding-top: 40px;
+  /* Spazio per i controlli vocali */
+}
+
+.day-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+.voice-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 2;
+}
+
+.recording-indicator {
+  color: #ff4444;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.transcript-preview {
+  font-size: 0.8rem;
+  color: #6d4c41;
+  padding: 4px 8px;
+  background: rgba(255, 209, 102, 0.2);
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.note-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  resize: none;
+  font-family: 'Fira Mono', 'Consolas', monospace;
+  font-size: 0.95rem;
+  color: #6d4c00;
+  line-height: 1.5;
+  padding: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.note-textarea:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px #ffd966;
 }
 
 .level-card {
@@ -369,6 +587,7 @@ export default {
 .v-card-title.headline.primary {
   background-color: #2196F3 !important;
 }
+
 /* Animazioni */
 .plant-gif {
   transition: transform 0.3s ease;
@@ -401,6 +620,25 @@ export default {
   font-size: 0.9em;
 }
 
+.transcript-preview.active {
+  background: rgba(255, 0, 0, 0.1);
+  border-left: 3px solid #ff4444;
+  font-weight: bold;
+  animation: flash 1.5s infinite;
+}
+
+@keyframes flash {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
 .note-paper {
   background: repeating-linear-gradient(to bottom,
       #fffde8,
@@ -420,6 +658,25 @@ export default {
   font-size: 2rem;
   color: #6d4c41;
   letter-spacing: 1px;
+}
+
+/* Animazione pulsazione per il microfono attivo */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pulse {
+  animation: pulse 0.8s infinite;
 }
 
 .note-paper::before {
@@ -447,6 +704,38 @@ export default {
   padding-left: 0;
   line-height: 30px;
   letter-spacing: 0.5px;
+}
+
+.forum-title {
+  color: #4527A0;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.forum-btn {
+  transition: all 0.3s ease;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(145deg, #673AB7, #4527A0);
+}
+
+.forum-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.v-card.forum-card {
+  border-left: 4px solid #673AB7;
+  border-radius: 12px;
+}
+
+@media (max-width: 960px) {
+  .forum-btn {
+    font-size: 0.875rem;
+    padding: 12px 20px;
+  }
 }
 
 .note-textarea::placeholder {

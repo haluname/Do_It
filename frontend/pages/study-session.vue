@@ -174,6 +174,7 @@
 <script>
 export default {
   middleware: 'auth',
+
   data() {
     return {
       durations: [15, 30, 45, 60],
@@ -500,9 +501,8 @@ COLORS:
 */
 
 *{
-  font-family: "Uto-Bold", sans-serif !important;
+  font-family: 'Uto-Bold', sans-serif !important;
 }
-
 .session-box {
   border-radius: 24px;
   background-color: #FDFAF6;

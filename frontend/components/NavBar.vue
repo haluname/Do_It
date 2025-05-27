@@ -1,31 +1,16 @@
 <template>
   <div>
     <!-- Sidebar per schermi grandi -->
-    <v-navigation-drawer 
-      v-if="!isMobile"
-      app 
-      permanent 
-      color="#34495e" 
-      dark 
-      class="nav-drawer"
-    >
+    <v-navigation-drawer v-if="!isMobile" app permanent color="#34495e" dark class="nav-drawer">
       <NuxtLink :to="`/home`" class="px-4 py-6 text-center">
         <v-img src="/img/logoBIG.svg" alt="Do!t Logo" max-width="120" class="mx-auto"></v-img>
       </NuxtLink>
 
-      <v-chip 
-        class="mx-auto my-4" 
-        color="primary" 
-        dark 
-        label 
-        style="font-weight: 600; font-size: 1.1rem;"
-      >
-      <v-avatar size="40" class="mr-3 rounded-circle" style="border: 2px solid #ffd166;">
-        <span 
-          style="text-transform: uppercase;"
-        >
-        {{ $auth.user.name ? $auth.user.name[0] : '?' }}
-      </span>
+      <v-chip class="mx-auto my-4" color="primary" dark label style="font-weight: 600; font-size: 1.1rem;">
+        <v-avatar size="40" class="mr-3 rounded-circle" style="border: 2px solid #ffd166;">
+          <span style="text-transform: uppercase;">
+            {{ $auth.user.name ? $auth.user.name[0] : '?' }}
+          </span>
 
         </v-avatar>
         Ciao, {{ $auth.user.name }}
@@ -33,23 +18,16 @@
 
       <v-list dense nav class="mt-4">
         <v-list-item-group color="#ffd166">
-          <v-list-item
-            v-for="(item, i) in navItems"
-            :key="i"
-            :to="item.route"
-            active-class="active-nav-item"
-          >
+          <v-list-item v-for="(item, i) in navItems" :key="i" :to="item.route" active-class="active-nav-item">
             <v-list-item-icon>
               <v-icon>{{ item.icon }}</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
-              <v-list-item-title 
-                :class="{ 
-                  'today-item': item.title === 'TODAY',
-                  'rainbow-text': item.title === 'TODAY',
-                  'item-list': true
-                }"
-              >
+              <v-list-item-title :class="{
+                'today-item': item.title === 'TODAY',
+                'rainbow-text': item.title === 'TODAY',
+                'item-list': true
+              }">
                 {{ item.title }}
               </v-list-item-title>
             </v-list-item-content>
@@ -59,10 +37,7 @@
 
       <!-- Pulsante Logout -->
       <div class="logout-container">
-        <v-list-item 
-          @click="logout"
-          class="logout-button"
-        >
+        <v-list-item @click="logout" class="logout-button">
           <v-list-item-icon>
             <v-icon color="#ffd166">mdi-logout</v-icon>
           </v-list-item-icon>
@@ -77,38 +52,19 @@
     </v-navigation-drawer>
 
     <!-- Bottom Navigation per mobile -->
-    <v-bottom-navigation 
-      v-if="isMobile" 
-      app 
-      fixed 
-      color="#34495e" 
-      grow
-      class="mobile-nav"
-      :value="activeIndex"
-    >
-      <v-btn 
-        v-for="(item, i) in navItems" 
-        :key="i" 
-        :to="item.route" 
-        class="mobile-nav-btn"
-        :active-class="'active-mobile-item'"
-      >
-        <v-icon :class="{'mobile-icon-active': $route.path === item.route}">
+    <v-bottom-navigation v-if="isMobile" app fixed color="#34495e" grow class="mobile-nav" :value="activeIndex">
+      <v-btn v-for="(item, i) in navItems" :key="i" :to="item.route" class="mobile-nav-btn"
+        :active-class="'active-mobile-item'">
+        <v-icon :class="{ 'mobile-icon-active': $route.path === item.route }">
           {{ item.icon }}
         </v-icon>
-        <span 
-          class="nav-label"
-          :class="{'label-active': $route.path === item.route}"
-        >
+        <span class="nav-label" :class="{ 'label-active': $route.path === item.route }">
           {{ item.title }}
         </span>
       </v-btn>
 
       <!-- Logout Mobile -->
-      <v-btn 
-        class="mobile-nav-btn"
-        @click="logout"
-      >
+      <v-btn class="mobile-nav-btn" @click="logout">
         <v-icon color="#ff6b6b">mdi-logout</v-icon>
         <span class="nav-label">Logout</span>
       </v-btn>
@@ -138,6 +94,10 @@ export default {
   methods: {
     async logout() {
       sessionStorage.removeItem("isPostBack");
+      if (this.$auth.loggedIn) {
+        const userKey = this.$auth.user.id;
+        localStorage.removeItem("user-" + userKey + '-weeklyNotes');
+      }
       await this.$auth.logout()
       this.$router.push('/')
     },
@@ -146,19 +106,20 @@ export default {
     },
   },
   mounted() {
-    this.checkScreenSize(); // Verifica la dimensione dello schermo al momento del montaggio
+    this.checkScreenSize();
     window.addEventListener('resize', this.checkScreenSize);
   },
   beforeDestroy() {
-    window.removeEventListener('resize', this.checkScreenSize); 
+    window.removeEventListener('resize', this.checkScreenSize);
   },
 };
 </script>
 
 <style scoped>
-*{
+* {
   font-family: 'Uto-Bold', sans-serif !important;
 }
+
 .logout-container {
   position: absolute;
   bottom: 20px;
@@ -214,7 +175,7 @@ export default {
 }
 
 .active-mobile-item {
-  background: linear-gradient(0deg, rgba(255,209,102,0.15) 0%, rgba(255,209,102,0) 100%) !important;
+  background: linear-gradient(0deg, rgba(255, 209, 102, 0.15) 0%, rgba(255, 209, 102, 0) 100%) !important;
 }
 
 .active-mobile-item .v-icon {
@@ -242,9 +203,17 @@ export default {
 }
 
 @keyframes icon-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .label-active {
@@ -252,9 +221,17 @@ export default {
 }
 
 @keyframes label-pop {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
 }
 
 .mobile-nav-btn:last-child .v-icon {
@@ -266,9 +243,18 @@ export default {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
-}
 
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-2px);
+  }
+
+  75% {
+    transform: translateX(2px);
+  }
+}
 </style>
