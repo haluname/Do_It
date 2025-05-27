@@ -5,6 +5,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\ThreadController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\LikeController;
+use App\Http\Controllers\Auth\PostController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -43,11 +48,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
 
-        Route::get('files/{file}/preview', [FileController::class, 'show']);
-
-        Route::get('files/{file}/download', [FileController::class, 'download']);
+    Route::get('files/{file}/preview', [FileController::class, 'show']);
+    Route::get('files/{file}/download', [FileController::class, 'download']);
     Route::apiResource('files', FileController::class)->except(['update']);
     Route::put("/apply-penalties", [GoalController::class, 'penalty']);
+
+    Route::post('/threads', [ThreadController::class, 'store']);
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/threads', [ThreadController::class, 'index']);
 
 });
 

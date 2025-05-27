@@ -30,6 +30,8 @@ class User extends Authenticatable
         'gender',
         'level',
         'experience',
+        'forum_role',
+        'signature',
     ];
 
     /**
@@ -98,5 +100,21 @@ class User extends Authenticatable
     public function currentLevelProgress()
     {
         return ($this->experience / $this->experienceToNextLevel()) * 100;
+    }
+
+    public function threads() {
+        return $this->hasMany(Thread::class);
+    }
+
+    public function posts() {
+        return $this->hasMany(Post::class);
+    }
+
+    public function likes() {
+        return $this->hasMany(Like::class);
+    }
+
+    public function notifications() {
+        return $this->hasMany(Notification::class);
     }
 }

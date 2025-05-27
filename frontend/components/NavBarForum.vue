@@ -34,6 +34,7 @@
 
     <!-- Right Section -->
     <v-spacer></v-spacer>
+      Livello {{ $auth.user.level }}
 
     <v-chip class="mx-3" color="#f8e9d1" label
       style="font-weight: 600; font-size: 1.1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
@@ -42,7 +43,7 @@
           {{ $auth.user.name ? $auth.user.name[0] : '?' }}
         </span>
       </v-avatar>
-      Ciao, {{ $auth.user.name }}
+    {{ $auth.user.name }}
     </v-chip>
   </v-app-bar>
 </template>
@@ -76,6 +77,9 @@ export default {
 </script>
 
 <style scoped>
+*{
+  font-family: "Uto-Bold", sans-serif !important;
+}
 .nav-btn {
   transition: all 0.3s ease;
   font-weight: 500;
