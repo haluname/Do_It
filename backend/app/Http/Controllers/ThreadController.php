@@ -20,7 +20,7 @@ class ThreadController extends Controller
                 ->orderBy('views_count', 'desc')
                 ->paginate($perPage, ['*'], 'page', $page);
 
-           return response()->json([
+            return response()->json([
                 'data' => $threads->items(),
                 'meta' => [
                     'current_page' => $threads->currentPage(),
@@ -28,8 +28,6 @@ class ThreadController extends Controller
                     'total' => $threads->total()
                 ]
             ], 200);
-
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error fetching threads',
@@ -38,7 +36,7 @@ class ThreadController extends Controller
         }
     }
 
-     public function store(Request $request)
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:120',
@@ -64,7 +62,6 @@ class ThreadController extends Controller
                 'message' => 'Thread created successfully',
                 'data' => $thread->load('category', 'user')
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error creating thread',
@@ -77,7 +74,7 @@ class ThreadController extends Controller
     public function show($id)
     {
         $thread = Thread::with(['user', 'category', 'posts.user'])->findOrFail($id);
-        
+
         // Incrementa visualizzazioni
         $thread->increment('views_count');
 
@@ -103,15 +100,51 @@ class ThreadController extends Controller
     public function getPosts(Request $request, $threadId)
     {
         $thread = Thread::findOrFail($threadId);
-        
-        // Carica i post principali con le loro risposte
+
+        // Carica i post principali con le risposte annidate
         $posts = $thread->posts()
-            ->with(['user', 'replies.user']) // Carica anche le risposte e i loro autori
+            ->with(['user', 'replies.user'])
             ->withCount('likes')
-            ->whereNull('parent_id') // Solo post principali
+            ->whereNull('parent_id')
             ->paginate(10);
 
-        return response()->json($posts->toArray());
+        // Formatta la risposta con struttura annidata
+        $formattedPosts = $posts->map(function ($post) use ($request) {
+            return $this->formatPost($post, $request);
+        });
+
+        return response()->json([
+            'data' => $formattedPosts,
+            'total' => $posts->total(),
+            'per_page' => $posts->perPage(),
+            'current_page' => $posts->currentPage(),
+            'last_page' => $posts->lastPage(),
+        ]);
+    }
+
+    private function formatPost($post, $request)
+    {
+        $likedByUser = false;
+        if ($request->user()) {
+            $likedByUser = $post->likes()->where('user_id', $request->user()->id)->exists();
+        }
+
+        $replies = $post->replies->map(function ($reply) use ($request) {
+            return $this->formatPost($reply, $request);
+        });
+
+        return [
+            'id' => $post->id,
+            'content' => $post->content,
+            'created_at' => $post->created_at,
+            'likes_count' => $post->likes_count,
+            'liked_by_user' => $likedByUser,
+            'user_id' => $post->user_id,
+            'user' => [
+                'name' => $post->user->name
+            ],
+            'replies' => $replies
+        ];
     }
 
     // Toggle pin
@@ -120,7 +153,7 @@ class ThreadController extends Controller
         $thread = Thread::findOrFail($id);
         $thread->pinned = !$thread->pinned;
         $thread->save();
-        
+
         return response()->json(['pinned' => $thread->pinned]);
     }
 
@@ -130,7 +163,34 @@ class ThreadController extends Controller
         $thread = Thread::findOrFail($id);
         $thread->closed = !$thread->closed;
         $thread->save();
-        
+
         return response()->json(['closed' => $thread->closed]);
     }
+
+    public function search(Request $request)
+{
+    try {
+        $query = $request->input('query');
+        $perPage = 5;
+        $page = $request->input('page', 1);
+
+        $threads = Thread::where('title', 'like', "%{$query}%")
+            ->with(['category', 'user'])
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'data' => $threads->items(),
+            'meta' => [
+                'current_page' => $threads->currentPage(),
+                'last_page' => $threads->lastPage(),
+                'total' => $threads->total()
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Error searching threads',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 }

@@ -28,7 +28,7 @@ class Thread extends Model
     protected $casts = [
         'pinned' => 'boolean',
         'closed' => 'boolean',
-        'created_at' => 'datetime:d M Y',
+       'created_at' => 'datetime:d M Y',
     ];
 
     // Relazioni

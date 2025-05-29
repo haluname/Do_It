@@ -21,9 +21,14 @@
                             </v-toolbar>
 
                             <v-card-text>
-                                <v-text-field v-model="search" prepend-inner-icon="mdi-magnify"
-                                    label="Cerca discussioni..." outlined dense hide-details
-                                    class="mb-4"></v-text-field>
+                                <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
+                                    label="Cerca discussioni..." outlined dense hide-details class="mb-4"
+                                    @keyup.enter="searchThreads"></v-text-field>
+
+                                <v-btn color="orange darken-3" dark @click="searchThreads">
+                                    <v-icon left>mdi-magnify</v-icon>
+                                    Cerca
+                                </v-btn>
 
                                 <v-chip-group v-model="filter" column multiple>
                                     <v-chip v-for="category in categories" :key="category.value" filter
@@ -35,14 +40,14 @@
                         </v-card>
 
                         <!-- Lista discussioni -->
-                        <v-card v-for="thread in filteredThreads" :key="thread.id" elevation="3"
-                            class="mb-4 thread-card" :class="{ 'highlighted-thread': thread.isPinned }">
+                        <v-card v-for="thread in threads" :key="thread.id" elevation="3" class="mb-4 thread-card"
+                            :class="{ 'highlighted-thread': thread.isPinned }">
                             <v-card-text class="py-3">
                                 <v-row align="center">
                                     <v-col cols="12" md="8">
                                         <div class="d-flex align-center">
                                             <v-icon small left :color="thread.category.color">{{ thread.category.icon
-                                            }}</v-icon>
+                                                }}</v-icon>
                                             <router-link :to="`/forum/${thread.id}`"
                                                 class="thread-title font-weight-medium">
                                                 {{ thread.title }}
@@ -79,8 +84,8 @@
                             </v-card-text>
                         </v-card>
 
-                        <v-pagination v-model="page" :length="totalPages" circle color="orange darken-2"
-                            class="mt-6"></v-pagination>
+                        <v-pagination v-model="page" :length="totalPages" circle color="orange darken-2" class="mt-6"
+                            :disabled="loading"></v-pagination>
                     </v-col>
 
                     <!-- Sidebar -->
@@ -199,6 +204,7 @@ export default {
             newThreadDialog: false,
             categories: [],
             threads: [],
+            searchQuery: '',
             errors: {},
             newThread: {
                 title: '',
@@ -232,14 +238,7 @@ export default {
         }
     },
     computed: {
-        filteredThreads() {
-            return this.threads.filter(thread => {
-                const matchesSearch = thread.title.toLowerCase().includes(this.search.toLowerCase())
-                const matchesCategory = this.filter.length === 0 ||
-                    this.filter.includes(this.categories.findIndex(c => c.value === thread.category.value))
-                return matchesSearch && matchesCategory
-            })
-        },
+
         categoryErrors() {
             return this.errors.category_id || []
         },
@@ -329,7 +328,7 @@ export default {
                     duration: 3000
                 });
 
-                const threadId = response.data.id;
+                const threadId = response.data.data.id;
                 this.$router.push(`/forum/${threadId}`);
 
                 this.closeDialog();
@@ -347,12 +346,12 @@ export default {
             }
         }
         ,
-
-        async loadThreads() {
+        async searchThreads() {
+            this.loading = true;
             try {
-                this.loading = true;
-                const response = await this.$axios.get('/api/threads', {
+                const response = await this.$axios.get('/api/threads/search', {
                     params: {
+                        query: this.searchQuery,
                         page: this.page
                     }
                 });
@@ -374,14 +373,55 @@ export default {
                 }));
 
                 this.totalItems = response.data.meta.total;
-
+                this.page = response.data.meta.current_page;
             } catch (error) {
-                console.error('Errore caricamento thread:', error);
-                this.$toast.error('Errore nel caricamento delle discussioni');
+                console.error('Errore nella ricerca:', error);
+                this.$toast.error('Errore nella ricerca delle discussioni');
             } finally {
                 this.loading = false;
             }
-        }
+        },
+
+        async loadThreads() {
+    this.loading = true;
+    try {
+        const isSearch = this.searchQuery.trim() !== '';
+        const response = isSearch 
+            ? await this.$axios.get('/api/threads/search', {
+                params: {
+                    query: this.searchQuery,
+                    page: this.page
+                }
+            })
+            : await this.$axios.get('/api/threads', {
+                params: { page: this.page }
+            });
+
+        this.threads = response.data.data.map(thread => ({
+            id: thread.id,
+            title: thread.title,
+            content: thread.content,
+            views_count: thread.views_count,
+            replies: thread.replies_count,
+            likes: thread.likes_count,
+            isPinned: thread.pinned,
+            date: thread.created_at,
+            category: {
+                text: thread.category.name,
+                color: thread.category.color
+            },
+            author: thread.user.name
+        }));
+        
+        this.totalItems = response.data.meta.total;
+        this.page = response.data.meta.current_page;
+    } catch (error) {
+        console.error('Errore caricamento thread:', error);
+        this.$toast.error('Errore nel caricamento delle discussioni');
+    } finally {
+        this.loading = false;
+    }
+}
 
     },
     async mounted() {

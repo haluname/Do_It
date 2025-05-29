@@ -53,13 +53,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('files', FileController::class)->except(['update']);
     Route::put("/apply-penalties", [GoalController::class, 'penalty']);
 
+    Route::get('/threads', [ThreadController::class, 'index']);
+    Route::get('/threads/search', [ThreadController::class, 'search']);
+
     Route::post('/threads', [ThreadController::class, 'store']);
+
     Route::get('/threads/{id}', [ThreadController::class, 'show']);
     Route::get('/threads/{id}/posts', [ThreadController::class, 'getPosts']);
     Route::put('/threads/{id}/pin', [ThreadController::class, 'updatePin'])->middleware('auth:sanctum');
     Route::put('/threads/{id}/close', [ThreadController::class, 'updateClose'])->middleware('auth:sanctum');
     Route::get('/categories', [CategoryController::class, 'index']);
-    Route::get('/threads', [ThreadController::class, 'index']);
+  
 
     Route::post('/posts', [PostController::class, 'store']);
     Route::post('/likes', [LikeController::class, 'store']);

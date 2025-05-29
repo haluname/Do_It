@@ -1,10 +1,8 @@
 <template>
   <v-app>
     <NavBarForum />
-    
-    <v-main style="background-color: #fdf3e4;">
-      <v-container class="py-8">
-        <!-- Breadcrumb -->
+    <v-main style="background-color: #fdf3e4; max-height: 100vh; overflow-y: auto;">
+<v-container class="py-8" > 
         <v-breadcrumbs :items="breadcrumbs" class="mb-4">
           <template v-slot:divider>
             <v-icon>mdi-chevron-right</v-icon>
@@ -20,7 +18,7 @@
               In evidenza
             </v-chip>
           </v-card-title>
-          
+
           <v-card-subtitle class="mt-2">
             <div class="d-flex align-center">
               <v-chip small :color="thread.category.color" dark class="mr-2">
@@ -42,7 +40,7 @@
 
           <v-card-text class="pt-4">
             <div class="thread-content" v-html="thread.content"></div>
-            
+
             <!-- Actions -->
             <div class="mt-6 d-flex">
               <v-btn v-if="canModerate" color="orange darken-3" dark x-small @click="togglePin">
@@ -63,68 +61,22 @@
             Nuova Risposta
           </v-card-title>
           <v-card-text>
-            <v-textarea v-model="newPostContent" label="Scrivi la tua risposta..." outlined rows="4" auto-grow></v-textarea>
+            <v-textarea v-model="newPostContent" label="Scrivi la tua risposta..." outlined rows="4"
+              auto-grow></v-textarea>
             <v-btn color="orange darken-3" dark @click="submitPost">Invia Risposta</v-btn>
           </v-card-text>
         </v-card>
 
         <!-- Lista risposte -->
-        <div v-for="post in posts" :key="post.id" class="mb-4">
-          <v-card elevation="3">
-            <v-card-text>
-              <div class="d-flex">
-                <v-avatar size="40" color="orange" class="mr-4">
-                  <span class="white-text">{{ post.authorInitials }}</span>
-                </v-avatar>
-                <div class="flex-grow-1">
-                  <div class="d-flex align-center">
-                    <strong>{{ post.author }}</strong>
-                    <span class="caption grey--text ml-2">{{ formatDate(post.date) }}</span>
-                  </div>
-                  <div class="mt-2" v-html="post.content"></div>
-                  
-                  <div class="mt-3 d-flex align-center">
-                    <v-btn icon x-small @click="likePost(post)">
-                      <v-icon :color="post.likedByUser ? 'red' : 'grey'">mdi-heart</v-icon>
-                    </v-btn>
-                    <span class="caption mr-4">{{ post.likes }}</span>
-                    
-                    <v-btn icon x-small @click="toggleReply(post)">
-                      <v-icon>mdi-reply</v-icon>
-                    </v-btn>
-                    <span class="caption">Rispondi</span>
-                  </div>
-
-                  <!-- Form risposta annidata -->
-                  <div v-if="post.showReplyForm" class="mt-3">
-                    <v-textarea v-model="post.replyContent" label="Scrivi una risposta..." outlined rows="2" auto-grow></v-textarea>
-                    <v-btn color="orange darken-3" dark small @click="submitReply(post)">Invia Risposta</v-btn>
-                  </div>
-
-                  <!-- Risposte annidate -->
-                  <div v-if="post.replies && post.replies.length > 0" class="mt-4 ml-8">
-                    <div v-for="reply in post.replies" :key="reply.id" class="mb-3">
-                      <v-card elevation="2" color="grey lighten-4">
-                        <v-card-text class="pa-3">
-                          <div class="d-flex">
-                            <v-avatar size="30" color="orange" class="mr-3">
-                              <span class="white-text">{{ reply.authorInitials }}</span>
-                            </v-avatar>
-                            <div>
-                              <strong>{{ reply.author }}</strong>
-                              <span class="caption grey--text ml-2">{{ formatDate(reply.date) }}</span>
-                              <div class="mt-1" v-html="reply.content"></div>
-                            </div>
-                          </div>
-                        </v-card-text>
-                      </v-card>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </v-card-text>
-          </v-card>
+          <div v-for="post in posts" :key="post.id" class="mb-4">
+          <PostItem 
+            :post="post"
+            :thread="thread"
+            :depth="0"
+            @reply-submitted="handleReplySubmitted"
+          />
         </div>
+        
 
         <!-- Paginazione -->
         <v-pagination v-model="page" :length="totalPages" circle color="orange darken-2" class="mt-6"></v-pagination>
@@ -181,7 +133,7 @@ export default {
       try {
         const response = await this.$axios.get(`/api/threads/${this.$route.params.id}`);
         const data = response.data;
-        
+
         this.thread = {
           id: data.id,
           title: data.title,
@@ -196,9 +148,11 @@ export default {
           closed: data.closed,
           replies: data.replies_count,
           views: data.views_count,
-          userId: data.user_id
+          userId: data.user_id,
+          email: data.user.email
         };
-        
+
+
         // Aggiorna titolo pagina
         document.title = `${this.thread.title} - Community`;
       } catch (error) {
@@ -208,27 +162,19 @@ export default {
         this.loading = false;
       }
     },
-    async loadPosts() {
+     async loadPosts() {
       this.loading = true;
       try {
-        const response = await this.$axios.get(`/api/threads/${this.thread.id}/posts`, {
-          params: { page: this.page }
+        const response = await this.$axios.get(`http://localhost:8000/api/threads/${this.thread.id}/posts`);
+        
+        // Mappatura corretta delle risposte annidate
+        this.posts = response.data.data.map(post => {
+          return this.formatPostWithReplies(post);
         });
         
-        this.posts = response.data.data.map(post => ({
-          id: post.id,
-          content: post.content,
-          author: post.user.name,
-          authorInitials: post.user.name.charAt(0),
-          date: post.created_at,
-          likes: post.likes_count,
-          likedByUser: post.liked_by_user,
-          userId: post.user_id,
-          replies: []
-        }));
-        
-        this.totalPages = Math.ceil(response.data.total / response.data.per_page);
+        this.totalPages = response.data.last_page;
       } catch (error) {
+        console.error('Dettagli errore:', error.response?.data || error.message);
         this.$toast.error('Errore nel caricamento delle risposte');
       } finally {
         this.loading = false;
@@ -236,9 +182,9 @@ export default {
     },
     async submitPost() {
       if (!this.newPostContent.trim()) return;
-      
+
       try {
-        const response = await this.$axios.post('/api/posts', {
+        const response = await this.$axios.post('http://localhost:8000/api/posts', {
           thread_id: this.thread.id,
           content: this.newPostContent
         }, {
@@ -246,7 +192,7 @@ export default {
             Authorization: `Bearer ${this.$auth.strategy.token.get()}`
           }
         });
-        
+
         // Aggiungi la nuova risposta alla lista
         this.posts.push({
           id: response.data.id,
@@ -258,13 +204,13 @@ export default {
           likedByUser: false,
           replies: []
         });
-        
+
         // Resetta il form
         this.newPostContent = '';
-        
+
         // Incrementa contatore risposte
         this.thread.replies++;
-        
+
         this.$toast.success('Risposta inviata con successo!');
       } catch (error) {
         this.$toast.error('Errore nell\'invio della risposta');
@@ -272,26 +218,28 @@ export default {
     },
     async togglePin() {
       try {
-        const response = await this.$axios.put(`/api/threads/${this.thread.id}/pin`, {}, {
+        const response = await this.$axios.put(`http://localhost:8000/api/threads/${this.thread.id}/pin`, {}, {
           headers: {
             Authorization: `Bearer ${this.$auth.strategy.token.get()}`
           }
         });
-        
+
         this.thread.pinned = response.data.pinned;
         this.$toast.success(this.thread.pinned ? 'Discussione evidenziata' : 'Evidenziazione rimossa');
       } catch (error) {
         this.$toast.error('Errore nell\'aggiornamento della discussione');
       }
     },
+
+    
     async toggleClose() {
       try {
-        const response = await this.$axios.put(`/api/threads/${this.thread.id}/close`, {}, {
+        const response = await this.$axios.put(`http://localhost:8000/api/threads/${this.thread.id}/close`, {}, {
           headers: {
             Authorization: `Bearer ${this.$auth.strategy.token.get()}`
           }
         });
-        
+
         this.thread.closed = response.data.closed;
         this.$toast.success(this.thread.closed ? 'Discussione chiusa' : 'Discussione riaperta');
       } catch (error) {
@@ -301,7 +249,7 @@ export default {
     async likePost(post) {
       if (post.likedByUser) {
         // Dislike
-        await this.$axios.delete(`/api/likes`, {
+        await this.$axios.delete(`http://localhost:8000/api/likes`, {
           data: {
             likeable_type: 'posts',
             likeable_id: post.id
@@ -314,7 +262,7 @@ export default {
         post.likedByUser = false;
       } else {
         // Like
-        await this.$axios.post('/api/likes', {
+        await this.$axios.post('http://localhost:8000/api/likes', {
           likeable_type: 'posts',
           likeable_id: post.id
         }, {
@@ -332,9 +280,9 @@ export default {
     },
     async submitReply(post) {
       if (!post.replyContent.trim()) return;
-      
+
       try {
-        const response = await this.$axios.post('/api/posts', {
+        const response = await this.$axios.post('http://localhost:8000/api/posts', {
           thread_id: this.thread.id,
           parent_id: post.id,
           content: post.replyContent
@@ -343,10 +291,10 @@ export default {
             Authorization: `Bearer ${this.$auth.strategy.token.get()}`
           }
         });
-        
+
         // Resetta il form
         post.replyContent = '';
-        
+
         // Aggiungi la risposta al post padre
         if (!post.replies) post.replies = [];
         post.replies.push({
@@ -356,7 +304,7 @@ export default {
           authorInitials: this.$auth.user.name.charAt(0),
           date: new Date().toISOString()
         });
-        
+
         this.$toast.success('Risposta inviata con successo!');
       } catch (error) {
         this.$toast.error('Errore nell\'invio della risposta');
@@ -365,6 +313,75 @@ export default {
     formatDate(dateString) {
       const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }
       return new Date(dateString).toLocaleDateString('it-IT', options)
+    },
+
+    formatPostWithReplies(post) {
+      const replies = post.replies ? post.replies.map(reply => {
+        return this.formatPostWithReplies(reply);
+      }) : [];
+      
+      return {
+        id: post.id,
+        content: post.content,
+        author: post.user?.name || 'Utente sconosciuto',
+        authorInitials: post.user?.name?.charAt(0) || '?',
+        date: post.created_at,
+        likes: post.likes_count || 0,
+        likedByUser: post.liked_by_user || false,
+        replies: replies,
+        showReplyForm: false,
+        replyContent: ''
+      };
+    },
+
+   async handleReplySubmitted({ parentId, content }) {
+      try {
+        const response = await this.$axios.post('http://localhost:8000/api/posts', {
+          thread_id: this.thread.id,
+          parent_id: parentId,
+          content: content
+        }, {
+          headers: {
+            Authorization: `Bearer ${this.$auth.strategy.token.get()}`
+          }
+        });
+
+        // Aggiungi la risposta ricorsivamente
+        this.addReplyToPost(parentId, {
+          id: response.data.id,
+          content: response.data.content,
+          author: this.$auth.user.name,
+          authorInitials: this.$auth.user.name.charAt(0),
+          date: new Date().toISOString(),
+          likes: 0,
+          likedByUser: false,
+          replies: [],
+          userId: this.$auth.user.id
+        });
+        
+        this.$toast.success('Risposta inviata con successo!');
+      } catch (error) {
+        console.error('Errore nella risposta:', error);
+        this.$toast.error('Errore nell\'invio della risposta');
+      }
+    },
+    
+   addReplyToPost(parentId, newReply) {
+      const findAndAdd = (postList) => {
+        for (const post of postList) {
+          if (post.id === parentId) {
+            if (!post.replies) this.$set(post, 'replies', []);
+            post.replies.push(newReply);
+            return true;
+          }
+          if (post.replies && post.replies.length > 0) {
+            if (findAndAdd(post.replies)) return true;
+          }
+        }
+        return false;
+      };
+      
+      findAndAdd(this.posts);
     }
   },
   watch: {
@@ -380,9 +397,11 @@ export default {
 </script>
 
 <style scoped>
+
 .white-text {
   color: white !important;
 }
+
 .thread-content {
   line-height: 1.8;
   white-space: pre-line;
