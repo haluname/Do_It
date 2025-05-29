@@ -42,7 +42,7 @@
                                     <v-col cols="12" md="8">
                                         <div class="d-flex align-center">
                                             <v-icon small left :color="thread.category.color">{{ thread.category.icon
-                                                }}</v-icon>
+                                            }}</v-icon>
                                             <router-link :to="`/forum/${thread.id}`"
                                                 class="thread-title font-weight-medium">
                                                 {{ thread.title }}
@@ -209,8 +209,8 @@ export default {
             filter: [],
             page: 1,
             newThreadDialog: false,
-           
-           
+
+
             topUsers: [
                 {
                     id: 1,
@@ -324,28 +324,16 @@ export default {
                     }
                 });
 
-              /*   const newThread = {
-                    id: response.data.id,
-                    title: response.data.title,
-                    content: response.data.content,
-                    author: this.$auth.user.name,
-                    replies: 0,
-                    likes: 0,
-                    isPinned: false,
-                    date: new Date().toISOString(),
-                    category: this.categories.find(c => c.id === response.data.category_id) || { text: 'Generale', color: 'grey' }
-                };
-
-                this.threads = [newThread, ...this.threads]; */
-
                 this.$toast.success('Discussione creata con successo!', {
                     icon: 'mdi-check-circle',
                     duration: 3000
                 });
 
+                const threadId = response.data.id;
+                this.$router.push(`/forum/${threadId}`);
+
                 this.closeDialog();
             } catch (error) {
-                // Aggiungi debug
                 console.error('Dettaglio errore:', error.response?.data || error.message);
                 if (error.response?.status === 422) {
                     this.errors = error.response.data.errors;
@@ -357,9 +345,10 @@ export default {
             } finally {
                 this.loading = false;
             }
-        },
+        }
+        ,
 
-         async loadThreads() {
+        async loadThreads() {
             try {
                 this.loading = true;
                 const response = await this.$axios.get('/api/threads', {
@@ -409,9 +398,10 @@ export default {
 </script>
 
 <style scoped>
-*{
-    font-family: "Uto-Bold", sans-serif !important; 
+* {
+    font-family: "Uto-Bold", sans-serif !important;
 }
+
 .thread-card {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 4px solid transparent;

@@ -72,4 +72,65 @@ class ThreadController extends Controller
             ], 500);
         }
     }
+
+
+    public function show($id)
+    {
+        $thread = Thread::with(['user', 'category', 'posts.user'])->findOrFail($id);
+        
+        // Incrementa visualizzazioni
+        $thread->increment('views_count');
+
+        return response()->json([
+            'id' => $thread->id,
+            'title' => $thread->title,
+            'content' => $thread->content,
+            'created_at' => $thread->created_at,
+            'pinned' => $thread->pinned,
+            'closed' => $thread->closed,
+            'replies_count' => $thread->replies_count,
+            'views_count' => $thread->views_count,
+            'user' => [
+                'name' => $thread->user->name
+            ],
+            'category' => [
+                'name' => $thread->category->name,
+                'color' => $thread->category->color
+            ]
+        ]);
+    }
+
+    public function getPosts(Request $request, $threadId)
+    {
+        $thread = Thread::findOrFail($threadId);
+        
+        // Carica i post principali con le loro risposte
+        $posts = $thread->posts()
+            ->with(['user', 'replies.user']) // Carica anche le risposte e i loro autori
+            ->withCount('likes')
+            ->whereNull('parent_id') // Solo post principali
+            ->paginate(10);
+
+        return response()->json($posts->toArray());
+    }
+
+    // Toggle pin
+    public function updatePin(Request $request, $id)
+    {
+        $thread = Thread::findOrFail($id);
+        $thread->pinned = !$thread->pinned;
+        $thread->save();
+        
+        return response()->json(['pinned' => $thread->pinned]);
+    }
+
+    // Toggle close
+    public function updateClose(Request $request, $id)
+    {
+        $thread = Thread::findOrFail($id);
+        $thread->closed = !$thread->closed;
+        $thread->save();
+        
+        return response()->json(['closed' => $thread->closed]);
+    }
 }

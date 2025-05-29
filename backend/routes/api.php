@@ -9,7 +9,7 @@ use App\Http\Controllers\ThreadController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\LikeController;
-use App\Http\Controllers\Auth\PostController;
+use App\Http\Controllers\PostController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -54,8 +54,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put("/apply-penalties", [GoalController::class, 'penalty']);
 
     Route::post('/threads', [ThreadController::class, 'store']);
+    Route::get('/threads/{id}', [ThreadController::class, 'show']);
+    Route::get('/threads/{id}/posts', [ThreadController::class, 'getPosts']);
+    Route::put('/threads/{id}/pin', [ThreadController::class, 'updatePin'])->middleware('auth:sanctum');
+    Route::put('/threads/{id}/close', [ThreadController::class, 'updateClose'])->middleware('auth:sanctum');
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/threads', [ThreadController::class, 'index']);
 
+    Route::post('/posts', [PostController::class, 'store']);
+    Route::post('/likes', [LikeController::class, 'store']);
+    Route::delete('/likes', [LikeController::class, 'destroy']);
 });
 
