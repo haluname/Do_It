@@ -885,7 +885,7 @@ export default {
 .v-card {
   display: flex;
   flex-direction: column;
-  min-height: 450px !important; 
+  min-height: 500px !important; 
   position: relative;
 }
 
@@ -896,13 +896,11 @@ padding-bottom: 48px;
 }
 
 .v-card__actions {
-  position: absolute;
+  position: sticky;
   bottom: 0;
-  right: 0;
-  left: 0;
-  background: linear-gradient(to bottom, transparent 0%, white 20%); /* Effetto sfumatura */
-  padding: 8px 16px !important;
-  border-top: 1px solid rgba(0,0,0,0.1);
+  background-color: white;
+  z-index: 1;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Effetto hover per i pulsanti */

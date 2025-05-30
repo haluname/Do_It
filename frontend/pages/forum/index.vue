@@ -39,11 +39,11 @@
                             </v-card-text>
                         </v-card>
 
-                        <!-- Lista discussioni -->
-                        <v-card v-for="thread in threads" :key="thread.id" elevation="3" class="mb-4 thread-card"
-                            :class="{ 'highlighted-thread': thread.isPinned }">
+
+                        <v-card v-for="thread in threads" :key="thread.id" elevation="3" class="mb-4 thread-card">
                             <v-card-text class="py-3">
                                 <v-row align="center">
+                                    <!-- Colonna sinistra: Titolo e info -->
                                     <v-col cols="12" md="8">
                                         <div class="d-flex align-center">
                                             <v-icon small left :color="thread.category.color">{{ thread.category.icon
@@ -58,18 +58,21 @@
                                             </v-chip>
                                         </div>
                                         <div class="thread-meta mt-1">
-                                            <span class="caption orange--text text--darken-2">
-                                                {{ thread.author }}
-                                            </span>
+                                            <span class="caption orange--text text--darken-2">{{ thread.author }}</span>
                                             <span class="caption grey--text mx-2">•</span>
-                                            <span class="caption grey--text">
-                                                {{ formatDate(thread.date) }}
-                                            </span>
+                                            <span class="caption grey--text">{{ formatDate(thread.date) }}</span>
                                         </div>
                                     </v-col>
 
+                                    <!-- Colonna destra: Azioni (like, commenti e cancella) -->
                                     <v-col cols="12" md="4">
+
                                         <div class="d-flex justify-end">
+                                            <v-btn v-if="$auth.user && $auth.user.forum_role === 'mod'" icon small
+                                                color="amber" @click="togglePin(thread)" class="ml-3">
+                                                <v-icon>{{ thread.isPinned ? 'mdi-pin' : 'mdi-pin-outline' }}</v-icon>
+                                            </v-btn>
+                                            <!-- Conteggio commenti e like -->
                                             <v-chip small class="mr-2" color="grey lighten-4">
                                                 <v-icon x-small left>mdi-comment-outline</v-icon>
                                                 {{ thread.replies }}
@@ -78,6 +81,13 @@
                                                 <v-icon x-small left>mdi-heart-outline</v-icon>
                                                 {{ thread.likes }}
                                             </v-chip>
+
+                                            <!-- Pulsante di cancella (visibile solo ai moderatori) -->
+                                            <v-btn v-if="$auth.user && $auth.user.forum_role === 'mod'" icon small
+                                                color="error" @click="deleteThread(thread.id)" class="ml-3">
+                                                <v-icon>mdi-delete</v-icon>
+                                            </v-btn>
+
                                         </div>
                                     </v-col>
                                 </v-row>
@@ -382,46 +392,76 @@ export default {
             }
         },
 
-        async loadThreads() {
-    this.loading = true;
-    try {
-        const isSearch = this.searchQuery.trim() !== '';
-        const response = isSearch 
-            ? await this.$axios.get('/api/threads/search', {
-                params: {
-                    query: this.searchQuery,
-                    page: this.page
-                }
-            })
-            : await this.$axios.get('/api/threads', {
-                params: { page: this.page }
-            });
+        async deleteThread(threadId) {
+            if (!confirm("Sei sicuro di voler eliminare questo thread?")) return;
 
-        this.threads = response.data.data.map(thread => ({
-            id: thread.id,
-            title: thread.title,
-            content: thread.content,
-            views_count: thread.views_count,
-            replies: thread.replies_count,
-            likes: thread.likes_count,
-            isPinned: thread.pinned,
-            date: thread.created_at,
-            category: {
-                text: thread.category.name,
-                color: thread.category.color
-            },
-            author: thread.user.name
-        }));
-        
-        this.totalItems = response.data.meta.total;
-        this.page = response.data.meta.current_page;
-    } catch (error) {
-        console.error('Errore caricamento thread:', error);
-        this.$toast.error('Errore nel caricamento delle discussioni');
-    } finally {
-        this.loading = false;
-    }
-}
+            try {
+                await this.$axios.delete(`http://localhost:8000/api/threads/${threadId}`);
+                this.$toast.success("Thread eliminato con successo!");
+                // Rimuovi il thread dalla lista
+                this.threads = this.threads.filter(t => t.id !== threadId);
+            } catch (error) {
+                console.error("Errore durante l'eliminazione:", error);
+                this.$toast.error("Impossibile eliminare il thread.");
+            }
+        },
+
+        async loadThreads() {
+            this.loading = true;
+            try {
+                const isSearch = this.searchQuery.trim() !== '';
+                const response = isSearch
+                    ? await this.$axios.get('/api/threads/search', {
+                        params: {
+                            query: this.searchQuery,
+                            page: this.page
+                        }
+                    })
+                    : await this.$axios.get('/api/threads', {
+                        params: { page: this.page }
+                    });
+
+                this.threads = response.data.data.map(thread => ({
+                    id: thread.id,
+                    title: thread.title,
+                    content: thread.content,
+                    views_count: thread.views_count,
+                    replies: thread.replies_count,
+                    likes: thread.likes_count,
+                    isPinned: thread.pinned,
+                    date: thread.created_at,
+                    category: {
+                        text: thread.category.name,
+                        color: thread.category.color
+                    },
+                    author: thread.user.name
+                }));
+
+                this.totalItems = response.data.meta.total;
+                this.page = response.data.meta.current_page;
+            } catch (error) {
+                console.error('Errore caricamento thread:', error);
+                this.$toast.error('Errore nel caricamento delle discussioni');
+            } finally {
+                this.loading = false;
+            }
+        },
+        async togglePin(thread) {
+            try {
+                const response = await this.$axios.put(
+                    `http://localhost:8000/api/threads/${thread.id}/pin`
+                );
+
+                // Aggiorna il thread nella lista
+                const updatedThread = response.data.data; 
+                this.threads = this.threads.map(t =>
+                    t.id === thread.id ? { ...t, isPinned: updatedThread.pinned } : t
+                );
+            } catch (error) {
+                console.error("Errore durante il pin:", error);
+                this.$toast.error("Impossibile modificare lo stato del pin.");
+            }
+        }
 
     },
     async mounted() {

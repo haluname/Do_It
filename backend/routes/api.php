@@ -59,6 +59,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/threads', [ThreadController::class, 'store']);
 
     Route::get('/threads/{id}', [ThreadController::class, 'show']);
+    Route::delete('/threads/{id}', [ThreadController::class, 'destroy']);
+
     Route::get('/threads/{id}/posts', [ThreadController::class, 'getPosts']);
     Route::put('/threads/{id}/pin', [ThreadController::class, 'updatePin'])->middleware('auth:sanctum');
     Route::put('/threads/{id}/close', [ThreadController::class, 'updateClose'])->middleware('auth:sanctum');

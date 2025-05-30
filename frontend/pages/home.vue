@@ -151,8 +151,8 @@ export default {
       recognition: null,
       currentDayIndex: null,
       aiReport: '',
-      reportLoading: false, 
-      loadingReport: false 
+      reportLoading: false,
+      loadingReport: false
     };
   },
 
@@ -361,12 +361,9 @@ export default {
     },
     saveNotesToLocalStorage() {
       if (typeof window !== 'undefined') {
-        // Salva solo se ci sono modifiche
-        if (this.notes.some(note => note.content !== '')) {
-          const userId = this.$auth.user.id;
-          localStorage.setItem(`user-${userId}-weeklyNotes`, JSON.stringify(this.notes));
-          localStorage.setItem('lastSavedWeek', this.currentWeek.toString());
-        }
+        const userId = this.$auth.user.id;
+        localStorage.setItem(`user-${userId}-weeklyNotes`, JSON.stringify(this.notes));
+        localStorage.setItem('lastSavedWeek', this.currentWeek.toString());
       }
     }
   },

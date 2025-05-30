@@ -17,6 +17,7 @@ class ThreadController extends Controller
             $page = $request->input('page', 1);
 
             $threads = Thread::with(['category', 'user'])
+                ->orderBy('pinned', 'desc')
                 ->orderBy('views_count', 'desc')
                 ->paginate($perPage, ['*'], 'page', $page);
 
@@ -168,27 +169,49 @@ class ThreadController extends Controller
     }
 
     public function search(Request $request)
+    {
+        try {
+            $query = $request->input('query');
+            $perPage = 5;
+            $page = $request->input('page', 1);
+
+            $threads = Thread::where('title', 'like', "%{$query}%")
+                ->with(['category', 'user'])
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            return response()->json([
+                'data' => $threads->items(),
+                'meta' => [
+                    'current_page' => $threads->currentPage(),
+                    'last_page' => $threads->lastPage(),
+                    'total' => $threads->total()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error searching threads',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy(Request $request, $id)
 {
     try {
-        $query = $request->input('query');
-        $perPage = 5;
-        $page = $request->input('page', 1);
+        // Trova il thread con le relazioni necessarie
+        $thread = Thread::with(['user', 'category'])->findOrFail($id);
 
-        $threads = Thread::where('title', 'like', "%{$query}%")
-            ->with(['category', 'user'])
-            ->paginate($perPage, ['*'], 'page', $page);
+
+        $thread->delete();
 
         return response()->json([
-            'data' => $threads->items(),
-            'meta' => [
-                'current_page' => $threads->currentPage(),
-                'last_page' => $threads->lastPage(),
-                'total' => $threads->total()
-            ]
+            'message' => 'Thread eliminato con successo',
+            'thread_id' => $id
         ]);
+        
     } catch (\Exception $e) {
         return response()->json([
-            'message' => 'Error searching threads',
+            'message' => 'Errore durante l\'eliminazione del thread',
             'error' => $e->getMessage()
         ], 500);
     }
