@@ -55,8 +55,8 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
-  
-    
+
+
     public function goals()
     {
         return $this->hasMany(Goal::class);
@@ -77,18 +77,18 @@ class User extends Authenticatable
     public function addExperience(int $points)
     {
         $this->experience += $points;
-        
-        while(true) {
+
+        while (true) {
             $required = $this->experienceToNextLevel();
-            
-            if($this->experience < $required) {
+
+            if ($this->experience < $required) {
                 break;
             }
-            
+
             $this->experience -= $required;
             $this->level++;
         }
-        
+
         $this->save();
     }
 
@@ -102,19 +102,34 @@ class User extends Authenticatable
         return ($this->experience / $this->experienceToNextLevel()) * 100;
     }
 
-    public function threads() {
+    public function threads()
+    {
         return $this->hasMany(Thread::class);
     }
 
-    public function posts() {
+    public function posts()
+    {
         return $this->hasMany(Post::class);
     }
 
-    public function likes() {
+    public function likes()
+    {
         return $this->hasMany(Like::class);
     }
 
-    public function notifications() {
+    public function notifications()
+    {
         return $this->hasMany(Notification::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    // User.php
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->whereNull('read_at');
     }
 }

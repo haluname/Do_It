@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Thread;
+use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -16,10 +17,25 @@ class ThreadController extends Controller
             $perPage = 5;
             $page = $request->input('page', 1);
 
-            $threads = Thread::with(['category', 'user'])
+            $query = Thread::query()->with(['category', 'user'])
+                ->orderBy('closed', 'asc')
                 ->orderBy('pinned', 'desc')
-                ->orderBy('views_count', 'desc')
-                ->paginate($perPage, ['*'], 'page', $page);
+                ->orderBy('created_at', 'desc') // Modificato per ordinare per data
+                ->orderBy('views_count', 'desc'); // Modificato per ordinare per data
+
+
+            // Filtro per categoria
+            if ($request->has('category_id')) {
+                $query->where('category_id', $request->category_id);
+            }
+
+            // Filtro per testo di ricerca
+            if ($request->has('query')) {
+                $searchTerm = $request->input('query');
+                $query->where('title', 'like', "%{$searchTerm}%");
+            }
+
+            $threads = $query->paginate($perPage, ['*'], 'page', $page);
 
             return response()->json([
                 'data' => $threads->items(),
@@ -36,6 +52,7 @@ class ThreadController extends Controller
             ], 500);
         }
     }
+
 
     public function store(Request $request)
     {
@@ -89,7 +106,8 @@ class ThreadController extends Controller
             'replies_count' => $thread->replies_count,
             'views_count' => $thread->views_count,
             'user' => [
-                'name' => $thread->user->name
+                'name' => $thread->user->name,
+                'id' => $thread->user->id
             ],
             'category' => [
                 'name' => $thread->category->name,
@@ -142,7 +160,8 @@ class ThreadController extends Controller
             'liked_by_user' => $likedByUser,
             'user_id' => $post->user_id,
             'user' => [
-                'name' => $post->user->name
+                'name' => $post->user->name,
+                'id' => $post->user->id
             ],
             'replies' => $replies
         ];
@@ -171,13 +190,22 @@ class ThreadController extends Controller
     public function search(Request $request)
     {
         try {
-            $query = $request->input('query');
+            $query = Thread::query()->with(['category', 'user']);
+
+            // Filtro per testo di ricerca
+            if ($request->has('query')) {
+                $searchTerm = $request->input('query');
+                $query->where('title', 'like', "%{$searchTerm}%");
+            }
+
+            // Filtro per categoria
+            if ($request->has('category_id')) {
+                $query->where('category_id', $request->category_id);
+            }
+
             $perPage = 5;
             $page = $request->input('page', 1);
-
-            $threads = Thread::where('title', 'like', "%{$query}%")
-                ->with(['category', 'user'])
-                ->paginate($perPage, ['*'], 'page', $page);
+            $threads = $query->paginate($perPage, ['*'], 'page', $page);
 
             return response()->json([
                 'data' => $threads->items(),
@@ -196,24 +224,33 @@ class ThreadController extends Controller
     }
 
     public function destroy(Request $request, $id)
-{
-    try {
-        // Trova il thread con le relazioni necessarie
-        $thread = Thread::with(['user', 'category'])->findOrFail($id);
+    {
+        try {
+            $thread = Thread::with(['user', 'category'])->findOrFail($id);
 
 
-        $thread->delete();
+            $thread->delete();
 
-        return response()->json([
-            'message' => 'Thread eliminato con successo',
-            'thread_id' => $id
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Errore durante l\'eliminazione del thread',
-            'error' => $e->getMessage()
-        ], 500);
+            return response()->json([
+                'message' => 'Thread eliminato con successo',
+                'thread_id' => $id
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Errore durante l\'eliminazione del thread',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
+
+    public function stats(Request $request)
+    {
+        return response()->json([
+            'total_threads' => Thread::count(),
+            'total_users' => User::count(),
+            'top_users' => User::orderByDesc('experience')
+                ->limit(3)
+                ->get(['name', 'experience', 'level']),
+        ]);
+    }
 }

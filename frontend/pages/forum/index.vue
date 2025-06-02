@@ -30,9 +30,10 @@
                                     Cerca
                                 </v-btn>
 
-                                <v-chip-group v-model="filter" column multiple>
-                                    <v-chip v-for="category in categories" :key="category.value" filter
-                                        :color="category.color" outlined>
+                                <v-chip-group column>
+                                    <v-chip v-for="category in categories" :key="category.id" :color="category.color"
+                                        outlined :input-value="selectedCategory === category.id"
+                                        @click="selectCategory(category.id)">
                                         {{ category.text }}
                                     </v-chip>
                                 </v-chip-group>
@@ -56,6 +57,11 @@
                                                 <v-icon x-small left>mdi-pin</v-icon>
                                                 In evidenza
                                             </v-chip>
+                                            <v-chip v-if="thread.closed" x-small color="red lighten-5" class="ml-2">
+                                                <!-- Nuovo chip -->
+                                                <v-icon x-small left>mdi-lock</v-icon>
+                                                Chiuso
+                                            </v-chip>
                                         </div>
                                         <div class="thread-meta mt-1">
                                             <span class="caption orange--text text--darken-2">{{ thread.author }}</span>
@@ -76,10 +82,6 @@
                                             <v-chip small class="mr-2" color="grey lighten-4">
                                                 <v-icon x-small left>mdi-comment-outline</v-icon>
                                                 {{ thread.replies }}
-                                            </v-chip>
-                                            <v-chip small color="grey lighten-4">
-                                                <v-icon x-small left>mdi-heart-outline</v-icon>
-                                                {{ thread.likes }}
                                             </v-chip>
 
                                             <!-- Pulsante di cancella (visibile solo ai moderatori) -->
@@ -108,15 +110,11 @@
                             <v-card-text>
                                 <div class="d-flex justify-space-between mb-2">
                                     <span class="caption">Discussioni totali</span>
-                                    <span class="font-weight-medium">1,234</span>
+                                    <span class="font-weight-medium">{{ totalThreads }}</span>
                                 </div>
                                 <div class="d-flex justify-space-between mb-2">
                                     <span class="caption">Utenti registrati</span>
-                                    <span class="font-weight-medium">589</span>
-                                </div>
-                                <div class="d-flex justify-space-between">
-                                    <span class="caption">Online ora</span>
-                                    <span class="font-weight-medium">126</span>
+                                    <span class="font-weight-medium">{{ totalUsers }}</span>
                                 </div>
                             </v-card-text>
                         </v-card>
@@ -124,41 +122,41 @@
                         <v-card elevation="6" class="mb-4" color="#fff3e0">
                             <v-card-title class="subtitle-1 font-weight-bold">
                                 <v-icon left color="orange darken-2">mdi-account-group</v-icon>
-                                Utenti più attivi
+                                Utenti più attivi su Do!t
                             </v-card-title>
                             <v-list dense>
-                                <v-list-item v-for="user in topUsers" :key="user.id">
-
+                                <v-list-item v-for="user in topUsers" :key="user.name">
                                     <v-list-item-content>
                                         <v-list-item-title class="caption font-weight-medium">
-                                            {{ user.name }}
+                                            {{ user.name }} (Lv. {{ user.level }})
                                         </v-list-item-title>
                                         <v-list-item-subtitle class="caption">
-                                            {{ user.points }} XP
+                                            {{ user.experience }} XP
                                         </v-list-item-subtitle>
                                     </v-list-item-content>
                                 </v-list-item>
                             </v-list>
                         </v-card>
-
-                        <v-card elevation="6" color="#f0f4ff">
+                        <v-card elevation="6" color="#e3f2fd" class="mb-4">
                             <v-card-title class="subtitle-1 font-weight-bold">
-                                <v-icon left color="blue darken-2">mdi-tag</v-icon>
-                                Categorie Popolari
+                                <v-icon left color="blue darken-2">mdi-account-box</v-icon>
+                                Hai dei dubbi o hai bisogno di aiuto?
                             </v-card-title>
                             <v-card-text>
-                                <v-chip v-for="category in popularCategories" :key="category.name"
-                                    :color="category.color" outlined class="ma-1" label>
-                                    {{ category.name }}
-                                    <v-avatar right class="ml-2" size="24" color="white">
-                                        {{ category.count }}
-                                    </v-avatar>
-                                </v-chip>
+                                <v-btn block color="blue darken-2" dark @click="$router.push('/forum/contact')"
+                                    class="text-capitalize">
+                                    <v-icon left>mdi-email</v-icon>
+                                    Contatta il Team
+                                </v-btn>
                             </v-card-text>
                         </v-card>
                     </v-col>
                 </v-row>
             </v-container>
+            <span class="text-caption grey--text text--darken-1 mx-auto copyright"
+                style="position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #6d4c41;">
+                © {{ new Date().getFullYear() }} Do!t. Tutti i diritti riservati.
+            </span>
         </v-main>
 
         <!-- Dialog nuova discussione -->
@@ -204,10 +202,15 @@
 
 <script>
 export default {
+    middleware: 'auth',
     data() {
         return {
             perPage: 5,
+            selectedCategory: null,
             totalItems: 0,
+            totalThreads: 0,
+            totalUsers: 0,
+            topUsers: [],
             search: '',
             loading: false,
             loadingCategories: false,
@@ -356,40 +359,9 @@ export default {
             }
         }
         ,
-        async searchThreads() {
-            this.loading = true;
-            try {
-                const response = await this.$axios.get('/api/threads/search', {
-                    params: {
-                        query: this.searchQuery,
-                        page: this.page
-                    }
-                });
-
-                this.threads = response.data.data.map(thread => ({
-                    id: thread.id,
-                    title: thread.title,
-                    content: thread.content,
-                    views_count: thread.views_count,
-                    replies: thread.replies_count,
-                    likes: thread.likes_count,
-                    isPinned: thread.pinned,
-                    date: thread.created_at,
-                    category: {
-                        text: thread.category.name,
-                        color: thread.category.color
-                    },
-                    author: thread.user.name
-                }));
-
-                this.totalItems = response.data.meta.total;
-                this.page = response.data.meta.current_page;
-            } catch (error) {
-                console.error('Errore nella ricerca:', error);
-                this.$toast.error('Errore nella ricerca delle discussioni');
-            } finally {
-                this.loading = false;
-            }
+        searchThreads() {
+            this.page = 1; // Resetta alla prima pagina
+            this.loadThreads(); // Usa lo stesso metodo di caricamento
         },
 
         async deleteThread(threadId) {
@@ -406,20 +378,24 @@ export default {
             }
         },
 
+
         async loadThreads() {
             this.loading = true;
             try {
-                const isSearch = this.searchQuery.trim() !== '';
-                const response = isSearch
-                    ? await this.$axios.get('/api/threads/search', {
-                        params: {
-                            query: this.searchQuery,
-                            page: this.page
-                        }
-                    })
-                    : await this.$axios.get('/api/threads', {
-                        params: { page: this.page }
-                    });
+                const params = {
+                    page: this.page,
+                };
+
+                if (this.selectedCategory) {
+                    params.category_id = this.selectedCategory;
+                }
+
+                if (this.searchQuery.trim() !== '') {
+                    params.query = this.searchQuery;
+                }
+
+                // Usa SEMPRE lo stesso endpoint
+                const response = await this.$axios.get('/api/threads', { params });
 
                 this.threads = response.data.data.map(thread => ({
                     id: thread.id,
@@ -428,6 +404,7 @@ export default {
                     views_count: thread.views_count,
                     replies: thread.replies_count,
                     likes: thread.likes_count,
+                    closed: thread.closed,
                     isPinned: thread.pinned,
                     date: thread.created_at,
                     category: {
@@ -446,20 +423,51 @@ export default {
                 this.loading = false;
             }
         },
+
+        // Metodo per gestire la selezione della categoria
+        selectCategory(categoryId) {
+            if (this.selectedCategory === categoryId) {
+                // Se la categoria è già selezionata, deseleziona
+                this.selectedCategory = null;
+            } else {
+                // Altrimenti seleziona la nuova categoria
+                this.selectedCategory = categoryId;
+            }
+            this.page = 1; // Resetta alla prima pagina
+            this.loadThreads();
+        },
         async togglePin(thread) {
             try {
                 const response = await this.$axios.put(
                     `http://localhost:8000/api/threads/${thread.id}/pin`
                 );
 
-                // Aggiorna il thread nella lista
-                const updatedThread = response.data.data; 
+                const pinnedStatus = response.data.pinned;
+
                 this.threads = this.threads.map(t =>
-                    t.id === thread.id ? { ...t, isPinned: updatedThread.pinned } : t
+                    t.id === thread.id ? { ...t, isPinned: pinnedStatus } : t
                 );
             } catch (error) {
                 console.error("Errore durante il pin:", error);
                 this.$toast.error("Impossibile modificare lo stato del pin.");
+            }
+        },
+        openNewThreadDialog() {
+            if (this.$auth.loggedIn) {
+                this.newThreadDialog = true
+            } else {
+                this.$router.push('/login')
+            }
+        },
+
+        async loadStats() {
+            try {
+                const response = await this.$axios.get('/api/stats');
+                this.totalThreads = response.data.total_threads;
+                this.totalUsers = response.data.total_users;
+                this.topUsers = response.data.top_users;
+            } catch (error) {
+                console.error('Errore caricamento statistiche:', error);
             }
         }
 
@@ -467,6 +475,8 @@ export default {
     async mounted() {
         await this.loadCategories();
         await this.loadThreads();
+        await this.loadStats();
+
     },
 
     watch: {
@@ -480,6 +490,11 @@ export default {
 <style scoped>
 * {
     font-family: "Uto-Bold", sans-serif !important;
+}
+
+.v-chip.v-chip--active {
+    border: 2px solid #ff9800 !important;
+    font-weight: bold;
 }
 
 .thread-card {
@@ -535,5 +550,11 @@ export default {
     to {
         transform: rotate(360deg);
     }
+}
+
+
+.v-main {
+    overflow-y: auto !important;
+    height: 100vh;
 }
 </style>

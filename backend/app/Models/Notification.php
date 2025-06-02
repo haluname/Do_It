@@ -11,12 +11,16 @@ class Notification extends Model
 
     protected $fillable = [
         'type',
+        'user_id',
         'message',
-        'read_at'
+        'read_at',
+        'notifiable_id', // Aggiungi questi due campi
+    'notifiable_type'
     ];
 
     protected $casts = [
         'read_at' => 'datetime',
+        
     ];
 
     public function user()

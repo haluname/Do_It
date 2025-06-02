@@ -1,57 +1,82 @@
 <template>
   <v-app>
-
     <NavBar />
 
     <v-main style="background-color: #fdf3e4;">
       <v-container class="py-8">
         <v-row>
-
           <v-col cols="12" md="8">
-            <v-card elevation="6" rounded="lg" class="mx-auto pa-6 notebook-background" max-width="100%">
+            <v-card elevation="6" rounded="xl" class="mx-auto pa-6 notebook-background">
               <div class="text-center mb-6">
-                <h2 class="notebook-title">Note Settimanali</h2>
-                <v-chip class="mt-2" color="orange lighten-3">
-                  Settimana {{ currentWeek }}
+                <div class="d-flex align-center justify-center">
+                  <v-btn icon @click="prevWeek" class="mr-2">
+                    <v-icon>mdi-chevron-left</v-icon>
+                  </v-btn>
+                  <h2 class="notebook-title">Note Settimanali</h2>
+                  <v-btn icon @click="nextWeek" class="ml-2">
+                    <v-icon>mdi-chevron-right</v-icon>
+                  </v-btn>
+                </div>
+                <v-chip class="mt-2" color="orange lighten-3" label>
+                  Settimana {{ currentWeek }} • {{ weekDates[0] }} - {{ weekDates[6] }}
                 </v-chip>
+                <v-alert v-if="reportExists" type="warning" dense class="mt-2">
+                  Hai già generato il resoconto per questa settimana
+                </v-alert>
               </div>
 
-              <!-- Aggiunto il contorno stile notebook -->
-              <div class="note-paper-container">
-                <v-row>
-                  <v-col v-for="(day, index) in notes" :key="index" cols="12" sm="6" md="4">
-                    <div class="day-card">
-                      <div class="day-header">{{ day.name }}</div>
+              <div class="week-container">
+                <div v-for="(day, index) in notes" :key="index" class="day-container">
+                  <div class="day-header">
+                    <div class="day-name">{{ day.name }}</div>
+                    <div class="day-date">{{ weekDates[index] }}</div>
+                    <v-chip v-if="isToday(weekDates[index])" small color="primary" class="today-chip">Oggi</v-chip>
+                  </div>
 
-                      <!-- Pulsante registrazione -->
-                      <div class="voice-controls">
-                        <v-btn @click="toggleRecognition(index)" :color="day.isListening ? 'red' : 'primary'" x-small
-                          icon :class="{ 'pulse': day.isListening }">
-                          <v-icon>{{ day.isListening ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
-                        </v-btn>
-                        <span v-if="day.isListening" class="recording-indicator">
-                          <v-icon x-small color="red">mdi-record</v-icon>
-                          Registrazione...
-                        </span>
-                      </div>
+                  <div class="note-container">
+                    <div class="voice-controls">
+                      <v-btn @click="toggleRecognition(index)" :color="day.isListening ? 'red' : 'primary'" icon
+                        :class="{ 'pulse': day.isListening }">
+                        <v-icon>{{ day.isListening ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
+                      </v-btn>
+                      <span v-if="day.isListening" class="recording-indicator">
+                        <v-icon x-small color="red">mdi-record</v-icon>
+                        Registrazione...
+                      </span>
+                    </div>
 
-                      <!-- Textarea con anteprima trascrizione -->
-                      <textarea v-model="day.content" class="note-textarea" :placeholder="'Note per ' + day.name"
-                        rows="4"></textarea>
-                      <div v-if="day.transcript" class="transcript-preview active">
-                        Anteprima: {{ day.transcript }}
+                    <div class="note-content">
+                      <v-textarea v-model="day.content" outlined auto-grow rows="3" hide-details
+                        :placeholder="'Note per ' + day.name" class="note-textarea" @blur="saveNotesToLocalStorage"
+                        :disabled="reportExists"></v-textarea>
+                      <div v-if="day.content" class="character-count">
+                        {{ day.content.length }}/1000
                       </div>
                     </div>
-                  </v-col>
-                </v-row>
+
+                    <div v-if="day.transcript" class="transcript-preview active">
+                      <v-icon small color="green">mdi-check</v-icon>
+                      Trascritto: {{ day.transcript }}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <v-btn color="primary" block @click="openReportDialog" :loading="loadingReport" class="mt-4">
-                <v-icon left>mdi-file-chart</v-icon>
-                Ottieni Resoconto
-              </v-btn>
+              <div class="d-flex flex-column">
+                <v-btn color="primary" block @click="openReportDialog" :loading="loadingReport" class="mt-4" large
+                  :disabled="reportExists">
+                  <v-icon left>mdi-file-chart</v-icon>
+                  Ottieni Resoconto
+                </v-btn>
+
+                <v-btn color="secondary" block @click="$router.push('/reports')" class="mt-2" large>
+                  <v-icon left>mdi-history</v-icon>
+                  Visualizza Resoconti
+                </v-btn>
+              </div>
             </v-card>
           </v-col>
+
           <!-- Colonna Livello -->
           <v-col cols="12" md="4">
             <v-card elevation="6" class="level-card" color="#e8f5e9">
@@ -90,9 +115,12 @@
           </v-col>
         </v-row>
       </v-container>
+      <span class="text-caption grey--text text--darken-1 mx-auto copyright"
+        style="position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #6d4c41;">
+        © {{ new Date().getFullYear() }} Do!t. Tutti i diritti riservati.
+      </span>
     </v-main>
 
-    <!-- Citazione Motivazionale -->
     <v-card class="motivational-quote" elevation="8" rounded="xl" v-if="showQuote && quote !== ''" @click="hideQuote">
       <v-icon left color="yellow darken-2">mdi-lightbulb</v-icon>
       <span>{{ quote }}</span>
@@ -121,12 +149,15 @@
           <v-btn color="primary" @click="reportDialog = false">
             Chiudi
           </v-btn>
+          <v-btn color="success" @click="saveReport" :loading="savingReport">
+            <v-icon left>mdi-content-save</v-icon>
+            Salva Resoconto
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
   </v-app>
 </template>
-
 
 <script>
 export default {
@@ -152,7 +183,10 @@ export default {
       currentDayIndex: null,
       aiReport: '',
       reportLoading: false,
-      loadingReport: false
+      loadingReport: false,
+      currentWeekOffset: 0,
+      savingReport: false,
+      reportExists: false
     };
   },
 
@@ -171,11 +205,46 @@ export default {
       const now = new Date();
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const pastDays = (now - startOfYear) / 86400000;
-      return Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+      return Math.ceil((pastDays + startOfYear.getDay() + 1) / 7) + this.currentWeekOffset;
+    },
+    weekDates() {
+      const dates = [];
+      const now = new Date();
+      const currentDay = now.getDay();
+      const startDate = new Date(now);
+      startDate.setDate(now.getDate() - currentDay + (currentDay === 0 ? -6 : 1) + (this.currentWeekOffset * 7));
+
+      const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        dates.push(`${date.getDate()} ${monthNames[date.getMonth()]}`);
+      }
+
+      return dates;
     }
   },
 
   methods: {
+    prevWeek() {
+      this.currentWeekOffset--;
+      this.loadNotes();
+      this.checkReportExists();
+    },
+
+    nextWeek() {
+      this.currentWeekOffset++;
+      this.loadNotes();
+      this.checkReportExists();
+    },
+
+    isToday(dateString) {
+      const today = new Date();
+      const todayString = `${today.getDate()} ${['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'][today.getMonth()]}`;
+      return dateString === todayString;
+    },
+
     hideQuote() {
       const quote = document.querySelector('.motivational-quote');
       quote.style.transition = 'opacity 0.5s';
@@ -214,18 +283,25 @@ export default {
         this.quote = "Credi in te stesso e tutto sarà possibile.";
       }
     },
+
+    async checkReportExists() {
+      try {
+        const response = await this.$axios.get(`/api/reports/check?week=${this.currentWeek}&year=${new Date().getFullYear()}`);
+        this.reportExists = response.data.exists;
+      } catch (error) {
+        console.error("Errore nel verificare il resoconto:", error);
+        this.reportExists = false;
+      }
+    },
+
     loadNotes() {
       if (typeof window !== 'undefined') {
         const currentWeekStr = this.currentWeek.toString();
         const savedWeek = localStorage.getItem('lastSavedWeek');
 
-        console.log('Current Week:', currentWeekStr);
-        console.log('Saved Week:', savedWeek);
-
         if (savedWeek === currentWeekStr) {
           const userId = this.$auth.user.id;
           const savedNotes = localStorage.getItem(`user-${userId}-weeklyNotes`);
-          console.log(savedNotes)
           if (savedNotes) {
             try {
               const parsedNotes = JSON.parse(savedNotes);
@@ -242,6 +318,7 @@ export default {
         }
       }
     },
+
     resetNotes() {
       this.notes = this.notes.map(day => ({ ...day, content: '' }));
       if (typeof window !== 'undefined') {
@@ -250,11 +327,11 @@ export default {
         localStorage.setItem('lastSavedWeek', this.currentWeek.toString());
       }
     },
+
     async generateReport() {
       this.reportLoading = true;
       try {
         const prompt = this.createReportPrompt();
-
 
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
@@ -270,18 +347,13 @@ export default {
 
         const data = await response.json();
         this.aiReport = data.choices[0].message.content;
-        console.log('Resoconto generato:', this.aiReport);
       } catch (error) {
         console.error('Errore generazione resoconto:', error);
         this.aiReport = "Impossibile generare il resoconto. Riprova più tardi.";
       }
       this.reportLoading = false;
-      this.notes.forEach(day => {
-        day.content = '';
-      });
-      let userId = this.$auth.user.id;
-      localStorage.removeItem(`user-${userId}-weeklyNotes`);
     },
+
     createReportPrompt() {
       return `Analizza queste note settimanali e fornisci un resoconto brutale sulla produttività. 
       Valuta in modo spietato: se ho fatto poco o sempre la stessa cosa (es. solo matematica per giorni), il voto deve essere basso. Non premiare l'abitudine, valuta varietà, intensità e impatto reale del lavoro.
@@ -290,7 +362,6 @@ export default {
       [Punteggio da 0 a 10]/10 - [Analisi in qualche frase. Sii tagliente, diretto, senza giustificazioni. Sottolinea carenze, inutili ripetizioni e dove sto sprecando il tempo. Dai consigli pratici su come alzare il livello.]
 
       Ecco le note giornaliere:\n\n${this.notes.map(d => `${d.name}: ${d.content || 'Nessuna nota'}`).join('\n')}`;
-
     },
 
     initSpeechRecognition() {
@@ -320,7 +391,6 @@ export default {
           };
 
           this.recognition.onend = () => {
-
             if (this.currentDayIndex !== null) {
               const day = this.notes[this.currentDayIndex];
               day.isListening = false;
@@ -332,22 +402,21 @@ export default {
     },
 
     toggleRecognition(index) {
+      if (this.reportExists) return;
+
       const day = this.notes[index];
 
-      // Verifica che SpeechRecognition sia disponibile
       if (!this.recognition) {
         this.$toast.error("Riconoscimento vocale non supportato in questo browser");
         return;
       }
 
       if (day.isListening) {
-        this.recognition.stop(); // Ferma la registrazione
-        day.content = day.transcript; // Sovrascrivi il contenuto della nota con l'anteprima
-        day.transcript = ''; // Rimuovi l'anteprima
+        this.recognition.stop();
+        day.content = day.transcript;
+        day.transcript = '';
         day.isListening = false;
         this.currentDayIndex = null;
-
-        // Salva immediatamente in localStorage
         this.saveNotesToLocalStorage();
       } else {
         if (this.currentDayIndex !== null) {
@@ -359,22 +428,55 @@ export default {
         this.recognition.start();
       }
     },
+
     saveNotesToLocalStorage() {
       if (typeof window !== 'undefined') {
         const userId = this.$auth.user.id;
         localStorage.setItem(`user-${userId}-weeklyNotes`, JSON.stringify(this.notes));
         localStorage.setItem('lastSavedWeek', this.currentWeek.toString());
       }
+    },
+
+    async saveReport() {
+      this.savingReport = true;
+      try {
+        const reportData = {
+          week: this.currentWeek,
+          year: new Date().getFullYear(),
+          content: this.aiReport,
+          notes: this.notes.map(day => ({
+            name: day.name,
+            content: day.content
+          }))
+        };
+
+        await this.$axios.post('/api/reports', reportData);
+
+        // Disabilita la modifica delle note
+        this.reportExists = true;
+        this.reportDialog = false;
+
+        // Resetta le note
+        this.notes.forEach(day => {
+          day.content = '';
+        });
+        const userId = this.$auth.user.id;
+        localStorage.removeItem(`user-${userId}-weeklyNotes`);
+
+        this.$toast.success('Resoconto salvato con successo!');
+      } catch (error) {
+        console.error('Errore nel salvataggio del resoconto:', error);
+        this.$toast.error('Errore nel salvataggio del resoconto');
+      }
+      this.savingReport = false;
     }
   },
-
-
 
   async mounted() {
     await this.$auth.fetchUser();
     this.loadNotes();
     this.initSpeechRecognition();
-
+    this.checkReportExists();
 
     this.userLevel = this.$auth.user.level;
     this.currentExperience = this.$auth.user.experience;
@@ -385,7 +487,6 @@ export default {
       sessionStorage.setItem("isPostBack", "true");
       this.generateMotivationalQuote();
     }
-
   },
 
   watch: {
@@ -402,13 +503,13 @@ export default {
       handler(newWeek, oldWeek) {
         if (oldWeek !== undefined && newWeek !== oldWeek) {
           this.resetNotes();
+          this.checkReportExists();
         }
       }
     },
     notes: {
       handler(newNotes) {
         if (typeof window !== 'undefined') {
-          // Aggiungi un controllo per evitare salvataggi inutili
           if (newNotes.some(note => note.content !== '')) {
             const userId = this.$auth.user.id;
             localStorage.setItem(`user-${userId}-weeklyNotes`, JSON.stringify(newNotes));
@@ -423,8 +524,8 @@ export default {
 };
 </script>
 
-
 <style scoped>
+/* Stili esistenti rimangono invariati */
 .v-main {
   overflow-y: auto !important;
   height: 100vh;
@@ -440,91 +541,128 @@ export default {
   position: relative;
 }
 
-.note-paper-container {
-  padding: 25px 20px 10px 40px;
-  position: relative;
+.week-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
-.note-paper-container::before {
-  content: "";
-  position: absolute;
-  left: 24px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #ffd966;
-  opacity: 0.7;
-}
-
-.notebook-title {
-  font-size: 2rem;
-  color: #6d4c41;
-  letter-spacing: 1px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.day-card {
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-  border: solid 0.5px #ffd966;
-  padding: 15px;
-  margin-bottom: 15px;
+.day-container {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
+  border: 1px solid #ffe9c7;
   position: relative;
-  padding-top: 40px;
-  /* Spazio per i controlli vocali */
+  overflow: hidden;
 }
 
-.day-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.day-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
+.day-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #ffd966;
+}
+
+.day-name {
+  font-weight: 700;
+  color: #6d4c41;
+  min-width: 100px;
+}
+
+.day-date {
+  color: #8d6e63;
+  font-size: 0.9em;
+  margin-left: 8px;
+}
+
+.today-chip {
+  margin-left: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.note-container {
+  position: relative;
+}
+
+.note-content {
+  position: relative;
+  z-index: 1;
+}
+
+.note-textarea {
+  background: rgba(255, 249, 230, 0.7);
+  border-radius: 8px;
+}
+
+.note-textarea::placeholder {
+  color: #bfa84a;
+  font-style: italic;
+}
+
+.character-count {
+  text-align: right;
+  font-size: 0.75rem;
+  color: #8d6e63;
+  margin-top: 4px;
+}
+
+.transcript-preview {
+  background: rgba(200, 230, 201, 0.3);
+  border-left: 3px solid #4caf50;
+  padding: 8px 12px;
+  margin-top: 10px;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.85rem;
+  color: #2e7d32;
+}
 
 .voice-controls {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 8px;
-  z-index: 2;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 8px;
+  border-radius: 0 0 0 8px;
 }
 
 .recording-indicator {
   color: #ff4444;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.transcript-preview {
-  font-size: 0.8rem;
-  color: #6d4c41;
-  padding: 4px 8px;
-  background: rgba(255, 209, 102, 0.2);
-  border-radius: 4px;
-  margin-top: 8px;
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
-.note-textarea {
-  width: 100%;
-  background: transparent;
-  border: none;
-  resize: none;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-  font-size: 0.95rem;
-  color: #6d4c00;
-  line-height: 1.5;
-  padding: 8px;
-  position: relative;
-  z-index: 1;
-}
-
-.note-textarea:focus {
-  outline: none;
-  box-shadow: inset 0 0 0 1px #ffd966;
+.pulse {
+  animation: pulse 0.8s infinite;
 }
 
 .level-card {
@@ -585,7 +723,6 @@ export default {
   background-color: #2196F3 !important;
 }
 
-/* Animazioni */
 .plant-gif {
   transition: transform 0.3s ease;
 }
@@ -594,34 +731,10 @@ export default {
   transform: scale(1.05);
 }
 
-.day-header {
-  font-weight: bold;
-  color: #6d4c41;
-  margin-bottom: 8px;
-  font-size: 1.1em;
-}
-
 .report-content {
   white-space: pre-wrap;
   line-height: 1.6;
   font-size: 1.1em;
-}
-
-.note-textarea {
-  width: 100%;
-  border: none;
-  resize: none;
-  padding: 8px;
-  background: transparent;
-  font-family: 'Fira Mono', monospace;
-  font-size: 0.9em;
-}
-
-.transcript-preview.active {
-  background: rgba(255, 0, 0, 0.1);
-  border-left: 3px solid #ff4444;
-  font-weight: bold;
-  animation: flash 1.5s infinite;
 }
 
 @keyframes flash {
@@ -634,73 +747,6 @@ export default {
   50% {
     opacity: 0.7;
   }
-}
-
-.note-paper {
-  background: repeating-linear-gradient(to bottom,
-      #fffde8,
-      #fffde8 29px,
-      #ffe9b7 30px);
-  border: 2px solid #ffc107;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.14);
-  padding: 25px 20px 10px 40px;
-  position: relative;
-  min-height: 280px;
-  margin-bottom: 10px;
-  overflow: hidden;
-}
-
-.notebook-title {
-  font-size: 2rem;
-  color: #6d4c41;
-  letter-spacing: 1px;
-}
-
-/* Animazione pulsazione per il microfono attivo */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.1);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-.pulse {
-  animation: pulse 0.8s infinite;
-}
-
-.note-paper::before {
-  content: "";
-  position: absolute;
-  left: 24px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #ffd966;
-  opacity: 0.7;
-}
-
-.note-textarea {
-  width: 100%;
-  height: 100%;
-  min-height: 220px;
-  background: transparent;
-  border: none;
-  resize: none;
-  font-size: 1.1rem;
-  color: #6d4c00;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-  outline: none;
-  padding-left: 0;
-  line-height: 30px;
-  letter-spacing: 0.5px;
 }
 
 .forum-title {
@@ -723,24 +769,6 @@ export default {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
-.v-card.forum-card {
-  border-left: 4px solid #673AB7;
-  border-radius: 12px;
-}
-
-@media (max-width: 960px) {
-  .forum-btn {
-    font-size: 0.875rem;
-    padding: 12px 20px;
-  }
-}
-
-.note-textarea::placeholder {
-  color: #bfa84a;
-  opacity: 1;
-}
-
-/* Motivational quote e altro stile come prima */
 .motivational-quote {
   position: fixed;
   bottom: 20px;
@@ -794,8 +822,29 @@ export default {
 }
 
 @media (max-width: 960px) {
+  .week-container {
+    grid-template-columns: 1fr;
+  }
+
+  .day-header {
+    flex-wrap: wrap;
+  }
+
+  .day-name {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
   .motivational-quote {
     bottom: 80px;
+  }
+}
+
+@media (max-width: 600px) {
+  .motivational-quote {
+    left: 10px;
+    right: 10px;
+    width: auto;
   }
 }
 </style>

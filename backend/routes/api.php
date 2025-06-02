@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ResourceController;
 
 
 
@@ -30,8 +32,10 @@ Route::post('/password/otp', [OtpController::class, 'sendOtp']);
 Route::post('/password/reset-with-otp', [OtpController::class, 'resetWithOtp']);
 Route::post('/verify-otp', [OtpController::class, 'verifyRegistrationOtp']);
 
+Route::get('/resources', [ResourceController::class, 'getAllResources']);
+Route::get('/resources/file/{slug}', [ResourceController::class, 'getResourceFile']);
 
-Route::middleware('auth:sanctum')->group(function () {  
+Route::middleware('auth:sanctum')->group(function () {
 
     // CRUD Goals
     Route::get('/goals', [GoalController::class, 'index']);
@@ -65,10 +69,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/threads/{id}/pin', [ThreadController::class, 'updatePin'])->middleware('auth:sanctum');
     Route::put('/threads/{id}/close', [ThreadController::class, 'updateClose'])->middleware('auth:sanctum');
     Route::get('/categories', [CategoryController::class, 'index']);
-  
+
+
+
+    // Rotte per i report
+    Route::get('/reports', [ReportController::class, 'index']);
+    Route::post('/reports', [ReportController::class, 'store']);
+    Route::get('/reports/check', [ReportController::class, 'check']);
+    Route::get('/reports/{report}', [ReportController::class, 'show']);
+    Route::delete('/reports/{report}', [ReportController::class, 'destroy']);
 
     Route::post('/posts', [PostController::class, 'store']);
+    Route::get('/posts/{id}', [PostController::class, 'show']);
+    
     Route::post('/likes', [LikeController::class, 'store']);
     Route::delete('/likes', [LikeController::class, 'destroy']);
-});
 
+
+    Route::post('/resources/books', [ResourceController::class, 'storeBook']);
+    Route::get('/stats', [ThreadController::class, 'stats']);
+
+    // api.php
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::put('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::post('/notifications', [NotificationController::class, 'store']);
+});

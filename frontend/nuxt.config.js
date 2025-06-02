@@ -4,7 +4,7 @@ export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
 
   // Target: https://go.nuxtjs.dev/config-target
-
+ 
   head: {
     link: [
       { rel: 'preload', href: '/fonts/Uto-Bold.ttf', as: 'font', type: 'font/ttf', crossorigin: 'anonymous' },
@@ -127,6 +127,7 @@ plugins: [{ src: '~/plugins/vue-toastification.js', mode: 'client' }],
    build: {
     extend(config, { isClient }) {
       if (isClient) {
+        
         config.node = {
           fs: 'empty',
           net: 'empty',

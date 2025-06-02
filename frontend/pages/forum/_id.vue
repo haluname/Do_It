@@ -2,7 +2,8 @@
   <v-app>
     <NavBarForum />
     <v-main style="background-color: #fdf3e4; max-height: 100vh; overflow-y: auto;">
-<v-container class="py-8" > 
+      <v-container class="py-8">
+        <!-- Breadcrumbs -->
         <v-breadcrumbs :items="breadcrumbs" class="mb-4">
           <template v-slot:divider>
             <v-icon>mdi-chevron-right</v-icon>
@@ -16,6 +17,11 @@
             <v-chip v-if="thread.pinned" x-small color="amber lighten-4" class="ml-2">
               <v-icon x-small left>mdi-pin</v-icon>
               In evidenza
+            </v-chip>
+            <!-- Badge CHIUSO aggiunto qui -->
+            <v-chip v-if="thread.closed" x-small color="red lighten-5" class="ml-2">
+              <v-icon x-small left>mdi-lock</v-icon>
+              Chiuso
             </v-chip>
           </v-card-title>
 
@@ -43,19 +49,23 @@
 
             <!-- Actions -->
             <div class="mt-6 d-flex">
-              <v-btn v-if="canModerate" color="orange darken-3" dark x-small @click="togglePin">
-                <v-icon left small>{{ thread.pinned ? 'mdi-pin-off' : 'mdi-pin' }}</v-icon>
-                {{ thread.pinned ? 'Rimuovi evidenziazione' : 'Evidenzia' }}
-              </v-btn>
-              <v-btn v-if="canModerate" color="red darken-3" dark x-small class="ml-2" @click="toggleClose">
+              <v-btn v-if="isThreadOwner" color="orange darken-3" dark x-small class="ml-2" @click="toggleClose">
                 <v-icon left small>{{ thread.closed ? 'mdi-lock-open' : 'mdi-lock' }}</v-icon>
                 {{ thread.closed ? 'Riapri discussione' : 'Chiudi discussione' }}
               </v-btn>
+
+              <!-- Pulsante pin visibile solo a mod/admin -->
+
             </div>
           </v-card-text>
         </v-card>
 
-        <!-- Nuova risposta -->
+        <!-- Messaggio thread chiuso -->
+        <v-alert v-if="thread.closed" type="info" class="mb-6">
+          Questa discussione è stata chiusa dal proprietario. Non è più possibile rispondere.
+        </v-alert>
+
+        <!-- Nuova risposta - nascosta se thread chiuso -->
         <v-card v-if="$auth.loggedIn && !thread.closed" elevation="3" class="mb-6">
           <v-card-title class="subtitle-1 font-weight-bold">
             Nuova Risposta
@@ -68,25 +78,18 @@
         </v-card>
 
         <!-- Lista risposte -->
-          <div v-for="post in posts" :key="post.id" class="mb-4">
-          <PostItem 
-            :post="post"
-            :thread="thread"
-            :depth="0"
-            @reply-submitted="handleReplySubmitted"
-          />
+        <div v-for="post in posts" :key="post.id" class="mb-4">
+          <PostItem :post="post" :thread="thread" :depth="0" @reply-submitted="handleReplySubmitted" />
         </div>
-        
 
-        <!-- Paginazione -->
         <v-pagination v-model="page" :length="totalPages" circle color="orange darken-2" class="mt-6"></v-pagination>
       </v-container>
     </v-main>
   </v-app>
 </template>
-
 <script>
 export default {
+  middleware: 'auth',
   data() {
     return {
       thread: {
@@ -125,7 +128,11 @@ export default {
     },
     canModerate() {
       return this.$auth.loggedIn && (this.$auth.user.isAdmin || this.thread.userId === this.$auth.user.id)
-    }
+    },
+    isThreadOwner() {
+      return this.$auth.loggedIn && this.$auth.user.id === this.thread.userId;
+    },
+
   },
   methods: {
     async loadThread() {
@@ -148,12 +155,10 @@ export default {
           closed: data.closed,
           replies: data.replies_count,
           views: data.views_count,
-          userId: data.user_id,
-          email: data.user.email
+          userId: data.user.id // SALVA L'ID DEL PROPRIETARIO
         };
+        console.log(this.thread);
 
-
-        // Aggiorna titolo pagina
         document.title = `${this.thread.title} - Community`;
       } catch (error) {
         this.$toast.error('Errore nel caricamento della discussione');
@@ -162,16 +167,38 @@ export default {
         this.loading = false;
       }
     },
-     async loadPosts() {
+
+    async toggleClose() {
+      try {
+        const response = await this.$axios.put(
+          `http://localhost:8000/api/threads/${this.thread.id}/close`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${this.$auth.strategy.token.get()}`
+            }
+          }
+        );
+
+        this.thread.closed = response.data.closed;
+        this.$toast.success(this.thread.closed ?
+          'Discussione chiusa con successo' :
+          'Discussione riaperta con successo'
+        );
+      } catch (error) {
+        this.$toast.error('Errore nell\'aggiornamento della discussione');
+      }
+    },
+    async loadPosts() {
       this.loading = true;
       try {
         const response = await this.$axios.get(`http://localhost:8000/api/threads/${this.thread.id}/posts`);
-        
+
         // Mappatura corretta delle risposte annidate
         this.posts = response.data.data.map(post => {
           return this.formatPostWithReplies(post);
         });
-        
+
         this.totalPages = response.data.last_page;
       } catch (error) {
         console.error('Dettagli errore:', error.response?.data || error.message);
@@ -211,6 +238,25 @@ export default {
         // Incrementa contatore risposte
         this.thread.replies++;
 
+
+        // Dopo aver inviato la risposta
+        if (this.thread.userId !== this.$auth.user.id) {
+          try {
+            await this.$axios.post('/api/notifications', {
+              user_id: this.thread.userId,
+              type: 'thread_reply',
+              notifiable_id: this.thread.id,
+              notifiable_type: 'App\\Models\\Thread',
+              message: `${this.$auth.user.name} ha risposto alla tua discussione "${this.thread.title}"`,
+            }, {
+              headers: { Authorization: `Bearer ${this.$auth.strategy.token.get()}` }
+            });
+          } catch (notificationError) {
+            console.error('Errore invio notifica:', notificationError);
+
+          }
+        }
+
         this.$toast.success('Risposta inviata con successo!');
       } catch (error) {
         this.$toast.error('Errore nell\'invio della risposta');
@@ -231,7 +277,7 @@ export default {
       }
     },
 
-    
+
     async toggleClose() {
       try {
         const response = await this.$axios.put(`http://localhost:8000/api/threads/${this.thread.id}/close`, {}, {
@@ -319,9 +365,10 @@ export default {
       const replies = post.replies ? post.replies.map(reply => {
         return this.formatPostWithReplies(reply);
       }) : [];
-      
+
       return {
         id: post.id,
+        userId: post.user_id || (post.user ? post.user.id : null),
         content: post.content,
         author: post.user?.name || 'Utente sconosciuto',
         authorInitials: post.user?.name?.charAt(0) || '?',
@@ -334,7 +381,7 @@ export default {
       };
     },
 
-   async handleReplySubmitted({ parentId, content }) {
+    async handleReplySubmitted({ parentId, content }) {
       try {
         const response = await this.$axios.post('http://localhost:8000/api/posts', {
           thread_id: this.thread.id,
@@ -358,15 +405,30 @@ export default {
           replies: [],
           userId: this.$auth.user.id
         });
-        
+
+        const parentPost = this.findPostById(parentId, this.posts);
+
+        if (parentPost && parentPost.userId !== this.$auth.user.id) {
+          await this.$axios.post('/api/notifications', {
+            user_id: parentPost.userId,
+            type: 'post_reply',
+            notifiable_id: parentId,
+            notifiable_type: 'App\\Models\\Post',
+            message: `${this.$auth.user.name} ha risposto al tuo messaggio`,
+            data: { thread_id: this.thread.id } // Aggiungi questa linea
+          }, {
+            headers: { Authorization: `Bearer ${this.$auth.strategy.token.get()}` }
+          });
+        }
+
         this.$toast.success('Risposta inviata con successo!');
       } catch (error) {
         console.error('Errore nella risposta:', error);
         this.$toast.error('Errore nell\'invio della risposta');
       }
     },
-    
-   addReplyToPost(parentId, newReply) {
+
+    addReplyToPost(parentId, newReply) {
       const findAndAdd = (postList) => {
         for (const post of postList) {
           if (post.id === parentId) {
@@ -380,8 +442,18 @@ export default {
         }
         return false;
       };
-      
+
       findAndAdd(this.posts);
+    },
+    findPostById(id, postList) {
+      for (const post of postList) {
+        if (post.id === id) return post;
+        if (post.replies?.length) {
+          const found = this.findPostById(id, post.replies);
+          if (found) return found;
+        }
+      }
+      return null;
     }
   },
   watch: {
@@ -397,6 +469,9 @@ export default {
 </script>
 
 <style scoped>
+* {
+  font-family: "Uto-Bold", sans-serif;
+}
 
 .white-text {
   color: white !important;
