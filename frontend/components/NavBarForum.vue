@@ -143,9 +143,9 @@ export default {
         route: '/forum/wiki'
       },
       {
-        text: 'Popolari',
+        text: 'FixZone',
         icon: 'mdi-fire',
-        route: '/forum/popular'
+        route: '/forum/fixzone'
       }
     ],
     notifications: [],

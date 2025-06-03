@@ -20,8 +20,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResourceController;
-
-
+use App\Http\Controllers\SolutionController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -94,4 +93,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::put('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     Route::post('/notifications', [NotificationController::class, 'store']);
+
+    Route::group(['prefix' => '/solutions'], function () {
+    Route::get('/', [SolutionController::class, 'index']);
+    Route::post('/', [SolutionController::class, 'store'])->middleware('auth:sanctum');
+    Route::post('/{solution}/like', [SolutionController::class, 'toggleLike'])->middleware('auth:sanctum');
+});
 });
