@@ -1,5 +1,7 @@
 <template>
     <v-app>
+        <Loader :generating="generating" name = "flashcards" />
+   
         <NavBar />
 
         <v-main style="background-color: #fdf3e4;">
@@ -50,6 +52,66 @@
 
                 </v-slide-group>
 
+                <v-card elevation="6" class="mb-8">
+                    <v-toolbar flat color="teal lighten-5">
+                        <v-toolbar-title class="teal--text text--darken-3">
+                            <v-icon left>mdi-cards</v-icon>
+                            Generatore di Flashcard
+                        </v-toolbar-title>
+                    </v-toolbar>
+
+                    <v-card-text>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <v-card outlined>
+                                    <v-card-title>Carica Documento</v-card-title>
+                                    <v-card-text>
+                                        <v-file-input v-model="documentFile" accept=".pdf,.txt,.docx"
+                                            label="Seleziona PDF, TXT o DOCX" outlined prepend-icon="mdi-file-document"
+                                            @change="extractText"></v-file-input>
+
+                                        <v-btn color="teal darken-2" dark @click="generateFlashcards"
+                                            :disabled="!extractedText || generating" :loading="generating" class="mt-4">
+                                            <v-icon left>mdi-auto-fix</v-icon>
+                                            Genera Flashcard
+                                        </v-btn>
+                                    </v-card-text>
+                                </v-card>
+                            </v-col>
+
+                            <v-col cols="12" md="6">
+                                <v-card outlined>
+                                    <v-card-title>Flashcard Generate</v-card-title>
+                                    <v-card-text>
+                                        <div v-if="flashcards.length === 0" class="text-center py-4 grey--text">
+                                            <v-icon size="64" color="grey lighten-2">mdi-cards-outline</v-icon>
+                                            <p class="mt-2">Nessuna flashcard generata</p>
+                                        </div>
+
+                                        <div v-else>
+                                            <v-expansion-panels accordion>
+                                                <v-expansion-panel v-for="(card, index) in flashcards" :key="index">
+                                                    <v-expansion-panel-header>
+                                                        <strong>{{ card.question }}</strong>
+                                                    </v-expansion-panel-header>
+                                                    <v-expansion-panel-content>
+                                                        {{ card.answer }}
+                                                    </v-expansion-panel-content>
+                                                </v-expansion-panel>
+                                            </v-expansion-panels>
+
+                                            <v-btn color="teal" dark @click="saveFlashcards" class="mt-4">
+                                                <v-icon left>mdi-content-save</v-icon>
+                                                Salva Flashcard
+                                            </v-btn>
+                                        </div>
+                                    </v-card-text>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+
                 <v-btn fab dark color="primary" fixed bottom right class="mb-10 mr-10 elevation-12"
                     @click="$refs.fileInput.click()">
                     <v-icon>mdi-plus</v-icon>
@@ -69,12 +131,19 @@ export default {
 
     data() {
         return {
-            files: []
+            files: [],
+            documentFile: null,
+            extractedText: "",
+            generating: false,
+            flashcards: [],
+            pdfjs: null,
+            mammoth: null
         }
     },
 
     async mounted() {
-        await this.fetchFiles()
+        await this.fetchFiles();
+        await this.loadLibraries();
     },
 
     methods: {
@@ -217,7 +286,213 @@ export default {
             if (mime.includes('video')) return 'video';
             if (mime.includes('msword') || mime.includes('document')) return 'document';
             return 'other';
+        },
+        async loadLibraries() {
+            // Carica PDF.js
+            if (!window.pdfjsLib) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement("script");
+                    script.src = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js";
+                    script.onload = () => {
+                        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+                            "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js";
+                        this.pdfjs = window.pdfjsLib;
+                        resolve();
+                    };
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            } else {
+                this.pdfjs = window.pdfjsLib;
+            }
+
+            // Carica Mammoth.js
+            if (!window.mammoth) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement("script");
+                    script.src = "https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js";
+                    script.onload = () => {
+                        this.mammoth = window.mammoth;
+                        resolve();
+                    };
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            } else {
+                this.mammoth = window.mammoth;
+            }
+        },
+
+        async extractText() {
+            if (!this.documentFile) return;
+
+            const extension = this.documentFile.name.split('.').pop().toLowerCase();
+
+            try {
+                if (extension === 'pdf') {
+                    this.extractedText = await this.extractFromPDF(this.documentFile);
+                } else if (extension === 'txt') {
+                    this.extractedText = await this.extractFromText(this.documentFile);
+                } else if (extension === 'docx') {
+                    this.extractedText = await this.extractFromDocx(this.documentFile);
+                } else {
+                    this.showError('Formato file non supportato');
+                }
+            } catch (error) {
+                console.error("Errore nell'estrazione:", error);
+                this.showError('Errore nell\'estrazione del testo');
+            }
+        },
+
+        // Estrazione da PDF
+        async extractFromPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const typedArray = new Uint8Array(arrayBuffer);
+
+            const pdf = await this.pdfjs.getDocument(typedArray).promise;
+            let fullText = "";
+
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const textContent = await page.getTextContent();
+                fullText += textContent.items.map(item => item.str).join(" ") + "\n";
+            }
+
+            return fullText;
+        },
+
+        // Estrazione da file di testo
+        extractFromText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        },
+
+        // Estrazione da DOCX
+        async extractFromDocx(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await this.mammoth.extractRawText({
+                arrayBuffer: arrayBuffer
+            });
+            return result.value;
+        },
+
+        async generateFlashcards() {
+            if (!this.extractedText) return;
+
+            this.generating = true;
+            this.flashcards = [];
+
+            try {
+                const prompt = `Dal seguente testo, genera quante flashcard credi siano utili per lo studio. 
+                Ogni flashcard deve avere:
+                1. Una domanda chiara
+                2. Una risposta precisa basata sul testo
+                
+                DEVI RESTITUIRE SOLAMENTE UN JSON VALIDO SENZA ALTRO TESTO, COMMENTI O PREFAZIONI.
+
+               Il JSON deve avere questa struttura:
+{
+  "flashcards": [
+    {"question": "testo domanda", "answer": "testo risposta"},
+    {"question": "testo domanda", "answer": "testo risposta"}
+  ]
+}
+                
+                Testo:
+                ${this.extractedText}`; // Limita a 3000 caratteri
+
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${this.$config.openrouterKey}`,
+                        'HTTP-Referer': 'https://www.doit-app.it',
+                        'X-Title': 'Do!t Flashcards',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'meta-llama/llama-3.3-70b-instruct:free',
+                        messages: [{ role: 'user', content: prompt }],
+
+                    }),
+                });
+
+                const data = await response.json();
+                const aiResponse = data.choices?.[0]?.message?.content;
+                const jsonStart = aiResponse.indexOf('{');
+                const jsonEnd = aiResponse.lastIndexOf('}') + 1;
+                const jsonString = aiResponse.substring(jsonStart, jsonEnd);
+
+                const result = JSON.parse(jsonString);
+
+                if (result.flashcards && Array.isArray(result.flashcards)) {
+                    this.flashcards = result.flashcards;
+                }
+                console.log("Risposta AI:", aiResponse);
+
+                try {
+                    const result = JSON.parse(aiResponse);
+                    if (result.flashcards && Array.isArray(result.flashcards)) {
+                        this.flashcards = result.flashcards;
+                    }
+                } catch (e) {
+                    console.error("Errore nel parsing:", e);
+                    this.showError("Formato di risposta non valido");
+                }
+            } catch (error) {
+                console.error("Errore nella generazione:", error);
+                this.showError("Errore nella generazione delle flashcard");
+                    this.tryFixJson(aiResponse);
+
+            } finally {
+                this.generating = false;
+            }
+        },
+
+        saveFlashcards() {
+            // Qui implementerai la logica per salvare le flashcard
+            this.showSuccess("Flashcard salvate con successo!");
+        },
+          tryFixJson(jsonString) {
+        try {
+            // Tentativo 1: aggiunta di virgolette mancanti
+            const fixed = jsonString
+                .replace(/(\w+):/g, '"$1":')  // Aggiunge virgolette alle chiavi
+                .replace(/: '(.+?)'/g, ': "$1"')  // Sostituisce singoli apici
+                .replace(/: ([^{}\[\],]+)(?=[,\]}])/g, ': "$1"');  // Aggiunge virgolette a valori non quotati
+            
+            const result = JSON.parse(fixed);
+            if (result.flashcards) {
+                this.flashcards = result.flashcards;
+                return;
+            }
+            
+            // Tentativo 2: estrai array da risposta non strutturata
+            const regex = /\{\s*"question":\s*"([^"]+)",\s*"answer":\s*"([^"]+)"\s*\}/g;
+            let match;
+            const flashcards = [];
+            
+            while ((match = regex.exec(jsonString)) !== null) {
+                flashcards.push({
+                    question: match[1],
+                    answer: match[2]
+                });
+            }
+            
+            if (flashcards.length > 0) {
+                this.flashcards = flashcards;
+                return;
+            }
+            
+            this.showError("Impossibile interpretare la risposta AI");
+        } catch (fixError) {
+            console.error("Correzione JSON fallita:", fixError);
+            this.showError("Errore grave nell'interpretazione della risposta");
         }
+    }
     }
 }
 </script>
@@ -225,6 +500,36 @@ export default {
 <style scoped>
 * {
     font-family: "Uto-Bold", sans-serif !important;
+}
+
+
+.v-main {
+    overflow-y: auto !important;
+    height: 100vh;
+}
+
+.flashcard-container {
+    background-color: #e8f5e9;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.v-expansion-panel {
+    margin-bottom: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.v-expansion-panel-header {
+    background-color: #f5f5f5;
+    font-weight: 500;
+}
+
+.v-expansion-panel-content {
+    background-color: white;
+    padding: 16px;
 }
 
 /* Nuovo design per le card */
@@ -261,6 +566,7 @@ export default {
     font-size: 28px;
     margin-right: 12px;
 }
+
 
 /* Corpo della card */
 .file-info {

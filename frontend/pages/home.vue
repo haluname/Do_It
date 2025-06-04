@@ -1,5 +1,6 @@
 <template>
   <v-app>
+    <Loader :generating="reportLoading" name="resoconto settimanale" />
     <NavBar />
 
     <v-main style="background-color: #fdf3e4;">
@@ -134,8 +135,6 @@
 
         <v-card-text class="pa-4">
           <div v-if="reportLoading" class="text-center py-6">
-            <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-            <div class="mt-4">Generazione resoconto in corso...</div>
           </div>
 
           <div v-else class="report-content">

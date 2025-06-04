@@ -1,5 +1,7 @@
 <template>
   <v-app style="height: 100vh">
+      <Loader :generating="generating" name = "tasks" />
+
     <v-main style="background-color: #fdf3e4;">
       <v-container class="py-8">
         <!-- Loader -->

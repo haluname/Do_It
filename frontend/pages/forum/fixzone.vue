@@ -1,5 +1,6 @@
 <template>
   <v-app>
+    <Loader :generating="validating" name="validazione" />
     <NavBarForum />
     <v-main style="background-color: #fdf3e4;">
       <v-container class="py-8">
@@ -147,14 +148,7 @@
             :disabled="validating || submitting"
           >
             <template v-if="validating">
-              <v-progress-circular
-                indeterminate
-                size="20"
-                width="2"
-                color="white"
-                class="mr-2"
-              ></v-progress-circular>
-              Validazione in corso...
+            
             </template>
             
             <template v-else-if="submitting">
