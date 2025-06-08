@@ -66,8 +66,19 @@ class SolutionController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $userId = auth()->id();
+        $existingPosts = Solution::where('user_id', $userId)->count();
+        $totalLikes = Solution::where('user_id', $userId)->sum('likes_count');
+        $requiredLikes = $existingPosts * 10;
+
+        if ($totalLikes < $requiredLikes) {
+            return response()->json([
+                'error' => 'Non hai abbastanza like per pubblicare una nuova soluzione.'
+            ], 403);
+        }
+
         $solution = Solution::create([
-            'user_id' => auth()->id(),
+            'user_id' => $userId,
             'title' => $request->title,
             'problem' => $request->problem,
             'solution' => $request->solution,

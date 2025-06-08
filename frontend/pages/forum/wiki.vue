@@ -24,8 +24,7 @@
 
               <!-- Lista categorie -->
               <v-expansion-panels accordion focusable>
-                <!-- Categoria: Libri -->
-                <v-expansion-panel>
+                <v-expansion-panel> 
                 <v-expansion-panel-header class="font-weight-bold d-flex align-center">
   <v-icon class="mr-2">mdi-book</v-icon>
   Libri Consigliati

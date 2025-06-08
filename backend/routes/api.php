@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\FlashcardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SolutionController;
@@ -98,5 +99,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/', [SolutionController::class, 'index']);
     Route::post('/', [SolutionController::class, 'store'])->middleware('auth:sanctum');
     Route::post('/{solution}/like', [SolutionController::class, 'toggleLike'])->middleware('auth:sanctum');
-});
+    });
+
+
+    Route::apiResource('flashcards', FlashcardController::class)->only(['index', 'store', 'destroy']);
+    Route::delete('/flashcards/group/{group_name}', [FlashcardController::class, 'deleteGroup']);
+
 });

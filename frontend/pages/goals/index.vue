@@ -11,7 +11,6 @@
 
         <!-- Quando ha finito di caricare -->
         <div v-else class="carousel-container">
-          <!-- Carosello Goals -->
           <v-slide-group 
           v-if="activeGoals.length > 0"
           class="pa-4"
@@ -398,7 +397,7 @@ export default {
       newGoal: {
         title: '',
         description: '',
-        priority: 2, // Default media priorità
+        priority: 2, 
         exp: new Date().toISOString().substr(0, 10)
       },
       priorityOptions: [

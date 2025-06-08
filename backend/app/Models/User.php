@@ -127,9 +127,13 @@ class User extends Authenticatable
         return $this->hasMany(Report::class);
     }
 
-    // User.php
     public function unreadNotifications()
     {
         return $this->hasMany(Notification::class)->whereNull('read_at');
+    }
+
+    public function flashcards()
+    {
+        return $this->hasMany(Flashcard::class);
     }
 }

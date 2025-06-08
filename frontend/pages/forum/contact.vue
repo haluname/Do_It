@@ -15,7 +15,6 @@
                 </v-container>
             </v-parallax>
 
-            <!-- Contact Section -->
             <v-container class="py-8 py-md-12">
                 <v-row justify="center">
                     <v-col cols="12" md="10" lg="8">

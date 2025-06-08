@@ -1,22 +1,123 @@
 <template>
     <v-app>
-        <Loader :generating="generating" name = "flashcards" />
-   
+        <Loader :generating="generating" name="flashcards" />
+
         <NavBar />
 
         <v-main style="background-color: #fdf3e4;">
-            <!-- Modifica al container principale -->
-            <v-container class="py-4" style="min-height: 90vh;"> <!-- Ridotto padding e aggiunto min-height -->
-                <!-- Modifica allo slide group -->
-                <v-slide-group show-arrows class="pa-2" style="overflow: visible; min-height: 500px;">
+            <v-container class="py-4" style="min-height: 90vh;">
+                <!-- Sezione Flashcard Salvate -->
+                <v-card elevation="6" class="mb-8">
+                    <v-toolbar flat color="teal lighten-5">
+                        <v-toolbar-title class="teal--text text--darken-3">
+                            <v-icon left>mdi-cards</v-icon>
+                            Le Tue Flashcard Salvate
+                        </v-toolbar-title>
+                    </v-toolbar>
+
+                    <v-card-text>
+                        <div v-if="savedFlashcards.length === 0" class="text-center py-4 grey--text">
+                            <v-icon size="64" color="grey lighten-2">mdi-cards</v-icon>
+                            <p class="mt-2">Nessuna flashcard salvata</p>
+                        </div>
+
+                        <div v-else>
+                            <!-- Expansion panel per gruppo -->
+                            <v-expansion-panels multiple class="mt-4">
+                                <v-expansion-panel v-for="(group, groupName) in groupedFlashcards" :key="groupName">
+                                    <v-expansion-panel-header class="group-header">
+                                        <div class="d-flex align-center">
+                                            <v-icon class="mr-2">mdi-folder</v-icon>
+                                            <strong>{{ groupName }}</strong>
+                                            <v-chip color="teal lighten-4" small class="ml-2">
+                                                {{ group.length }} {{ group.length === 1 ? 'flashcard' : 'flashcards' }}
+                                            </v-chip>
+                                        </div>
+
+                                        <template v-slot:actions>
+                                            <v-btn icon @click.stop="deleteGroup(groupName)" color="error" class="ml-2">
+                                                <v-icon>mdi-delete-forever</v-icon>
+                                            </v-btn>
+                                        </template>
+                                    </v-expansion-panel-header>
+
+                                    <v-expansion-panel-content>
+                                        <div class="flashcards-grid">
+                                            <!-- Mini card per ogni flashcard -->
+                                            <v-card v-for="card in group" :key="card.id" class="mini-card ma-2"
+                                                @click="showCardDetails(card)">
+                                                <v-card-text class="question-text">
+                                                    {{ card.question }}
+                                                </v-card-text>
+
+                                                <v-card-actions class="justify-end pa-1">
+                                                    <v-btn icon small @click.stop="deleteFlashcard(card)" color="error">
+                                                        <v-icon small>mdi-delete</v-icon>
+                                                    </v-btn>
+                                                </v-card-actions>
+                                            </v-card>
+                                        </div>
+                                    </v-expansion-panel-content>
+                                </v-expansion-panel>
+                            </v-expansion-panels>
+                        </div>
+                    </v-card-text>
+                </v-card>
+
+                <!-- Dialog per salvare con nome gruppo -->
+                <v-dialog v-model="saveDialog" max-width="500">
+                    <v-card>
+                        <v-card-title class="teal lighten-5">
+                            <v-icon left>mdi-content-save</v-icon>
+                            Salva Flashcard
+                        </v-card-title>
+
+                        <v-card-text class="pa-4">
+                            <v-text-field v-model="groupName" label="Nome del gruppo" outlined clearable
+                                hint="Es: Biologia Capitolo 3, Storia Romana" persistent-hint></v-text-field>
+
+                            <div class="text-caption teal--text">
+                                Assegna un nome significativo a questo gruppo di flashcard
+                            </div>
+                        </v-card-text>
+
+                        <v-card-actions class="justify-end">
+                            <v-btn color="grey" text @click="saveDialog = false">Annulla</v-btn>
+                            <v-btn color="teal" dark @click="confirmSave">Salva</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <!-- Dialog per visualizzare la flashcard completa -->
+                <v-dialog v-model="cardDialog" max-width="600">
+                    <v-card v-if="selectedCard">
+                        <v-card-title class="teal lighten-5">
+                            <v-icon left>mdi-card-text</v-icon>
+                            Dettaglio Flashcard
+                        </v-card-title>
+
+                        <v-card-text class="pa-4">
+                            <div class="question-dialog">
+                                <strong>Domanda:</strong> {{ selectedCard.question }}
+                            </div>
+                            <v-divider class="my-3"></v-divider>
+                            <div class="answer-dialog">
+                                <strong>Risposta:</strong> {{ selectedCard.answer }}
+                            </div>
+                        </v-card-text>
+
+                        <v-card-actions class="justify-end">
+                            <v-btn color="teal" text @click="cardDialog = false">Chiudi</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <!-- Sezione File Caricati -->
+                <v-slide-group show-arrows class="pa-2 mb-8" style="overflow: visible; min-height: 500px;">
                     <v-slide-item v-for="file in files" :key="file.id" v-slot="{ toggle }" class="mb-4">
-                        <!-- Aggiunto stile alla card -->
                         <div class="carousel-item mx-2" style="margin-top: 20px; margin-bottom: 20px;">
-                            <!-- Margini verticali -->
                             <v-card class="file-card" elevation="6" width="300" style="min-height: 200px;"
                                 :data-file-type="getFileType(file.mime_type)">
-
-
                                 <v-card-title class="file-title">
                                     <v-icon class="mr-2">{{ fileIcon(file.mime_type) }}</v-icon>
                                     {{ truncateFileName(file.original_name) }}
@@ -32,13 +133,10 @@
                                 </v-card-text>
 
                                 <v-card-actions class="justify-end pa-2">
-                                    <!-- Pulsante Anteprima -->
                                     <v-btn icon v-if="isPreviewable(file.mime_type)" @click="openFile(file)"
                                         color="teal">
                                         <v-icon>mdi-open-in-new</v-icon>
                                     </v-btn>
-
-                                    <!-- Pulsanti esistenti -->
                                     <v-btn icon @click="downloadFile(file)" color="primary">
                                         <v-icon>mdi-download</v-icon>
                                     </v-btn>
@@ -49,13 +147,13 @@
                             </v-card>
                         </div>
                     </v-slide-item>
-
                 </v-slide-group>
 
+                <!-- Sezione Generatore di Flashcard -->
                 <v-card elevation="6" class="mb-8">
                     <v-toolbar flat color="teal lighten-5">
                         <v-toolbar-title class="teal--text text--darken-3">
-                            <v-icon left>mdi-cards</v-icon>
+                            <v-icon left>mdi-auto-fix</v-icon>
                             Generatore di Flashcard
                         </v-toolbar-title>
                     </v-toolbar>
@@ -89,7 +187,7 @@
                                         </div>
 
                                         <div v-else>
-                                            <v-expansion-panels accordion>
+                                            <v-expansion-panels accordion class="mt-4">
                                                 <v-expansion-panel v-for="(card, index) in flashcards" :key="index">
                                                     <v-expansion-panel-header>
                                                         <strong>{{ card.question }}</strong>
@@ -120,9 +218,7 @@
                 <input type="file" ref="fileInput" hidden @change="uploadFile">
             </v-container>
         </v-main>
-
     </v-app>
-
 </template>
 
 <script>
@@ -137,13 +233,41 @@ export default {
             generating: false,
             flashcards: [],
             pdfjs: null,
-            mammoth: null
+            mammoth: null,
+            savedFlashcards: [],
+            deleting: false,
+            saveDialog: false,      // Controlla il dialog di salvataggio
+            groupName: '',          // Nome del gruppo per il salvataggio
+            cardDialog: false,      // Controlla il dialog di dettaglio
+            selectedCard: null
+        }
+    },
+
+    computed: {
+        // Raggruppa le flashcard per data di creazione
+        groupedFlashcards() {
+            const groups = {};
+            this.savedFlashcards.forEach(card => {
+                const group = card.group_name || 'Senza gruppo';
+
+                if (!groups[group]) {
+                    groups[group] = [];
+                }
+                groups[group].push(card);
+            });
+
+            // Ordina i gruppi alfabeticamente
+            return Object.keys(groups).sort().reduce((acc, key) => {
+                acc[key] = groups[key];
+                return acc;
+            }, {});
         }
     },
 
     async mounted() {
         await this.fetchFiles();
         await this.loadLibraries();
+        await this.loadSavedFlashcards();
     },
 
     methods: {
@@ -154,6 +278,21 @@ export default {
             } catch (error) {
                 this.showError('Errore nel caricamento dei file')
             }
+        },
+
+        formatGroupDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        },
+
+        showCardDetails(card) {
+            this.selectedCard = card;
+            this.cardDialog = true;
         },
 
         async uploadFile(e) {
@@ -445,54 +584,131 @@ export default {
             } catch (error) {
                 console.error("Errore nella generazione:", error);
                 this.showError("Errore nella generazione delle flashcard");
-                    this.tryFixJson(aiResponse);
+                this.tryFixJson(aiResponse);
 
             } finally {
                 this.generating = false;
             }
         },
 
-        saveFlashcards() {
-            // Qui implementerai la logica per salvare le flashcard
-            this.showSuccess("Flashcard salvate con successo!");
+        async loadSavedFlashcards() {
+            try {
+                const response = await this.$axios.get('http://localhost:8000/api/flashcards');
+                this.savedFlashcards = response.data;
+            } catch (error) {
+                console.error("Errore nel caricamento delle flashcard:", error);
+            }
         },
-          tryFixJson(jsonString) {
-        try {
-            // Tentativo 1: aggiunta di virgolette mancanti
-            const fixed = jsonString
-                .replace(/(\w+):/g, '"$1":')  // Aggiunge virgolette alle chiavi
-                .replace(/: '(.+?)'/g, ': "$1"')  // Sostituisce singoli apici
-                .replace(/: ([^{}\[\],]+)(?=[,\]}])/g, ': "$1"');  // Aggiunge virgolette a valori non quotati
-            
-            const result = JSON.parse(fixed);
-            if (result.flashcards) {
-                this.flashcards = result.flashcards;
+
+        saveFlashcards() {
+            if (this.flashcards.length === 0) return;
+            this.groupName = ''; // Resetta il nome gruppo
+            this.saveDialog = true;
+        },
+
+        // Conferma il salvataggio con nome gruppo
+        async confirmSave() {
+            if (!this.groupName) {
+                this.showError("Inserisci un nome per il gruppo");
                 return;
             }
-            
-            // Tentativo 2: estrai array da risposta non strutturata
-            const regex = /\{\s*"question":\s*"([^"]+)",\s*"answer":\s*"([^"]+)"\s*\}/g;
-            let match;
-            const flashcards = [];
-            
-            while ((match = regex.exec(jsonString)) !== null) {
-                flashcards.push({
-                    question: match[1],
-                    answer: match[2]
+
+            try {
+                await this.$axios.post('http://localhost:8000/api/flashcards', {
+                    group_name: this.groupName,
+                    flashcards: this.flashcards
                 });
+
+                this.showSuccess(`Flashcard salvate nel gruppo "${this.groupName}"!`);
+
+                // Ricarica le flashcard salvate dopo il salvataggio
+                await this.loadSavedFlashcards();
+
+                // Resetta le flashcard generate
+                this.flashcards = [];
+                this.saveDialog = false;
+            } catch (error) {
+                console.error("Errore nel salvataggio:", error);
+                this.showError("Errore nel salvataggio delle flashcard");
             }
-            
-            if (flashcards.length > 0) {
-                this.flashcards = flashcards;
+        },
+
+        async deleteFlashcard(flashcard) {
+            if (!confirm('Sei sicuro di voler eliminare questa flashcard?')) {
                 return;
             }
-            
-            this.showError("Impossibile interpretare la risposta AI");
-        } catch (fixError) {
-            console.error("Correzione JSON fallita:", fixError);
-            this.showError("Errore grave nell'interpretazione della risposta");
+
+            this.deleting = true;
+
+            try {
+                await this.$axios.delete(`http://localhost:8000/api/flashcards/${flashcard.id}`);
+                this.savedFlashcards = this.savedFlashcards.filter(card => card.id !== flashcard.id);
+                this.showSuccess('Flashcard eliminata!');
+            } catch (error) {
+                console.error("Errore nell'eliminazione:", error);
+                this.showError("Errore nell'eliminazione della flashcard");
+            } finally {
+                this.deleting = false;
+            }
+        },
+        tryFixJson(jsonString) {
+            try {
+                // Tentativo 1: aggiunta di virgolette mancanti
+                const fixed = jsonString
+                    .replace(/(\w+):/g, '"$1":')  // Aggiunge virgolette alle chiavi
+                    .replace(/: '(.+?)'/g, ': "$1"')  // Sostituisce singoli apici
+                    .replace(/: ([^{}\[\],]+)(?=[,\]}])/g, ': "$1"');  // Aggiunge virgolette a valori non quotati
+
+                const result = JSON.parse(fixed);
+                if (result.flashcards) {
+                    this.flashcards = result.flashcards;
+                    return;
+                }
+
+                // Tentativo 2: estrai array da risposta non strutturata
+                const regex = /\{\s*"question":\s*"([^"]+)",\s*"answer":\s*"([^"]+)"\s*\}/g;
+                let match;
+                const flashcards = [];
+
+                while ((match = regex.exec(jsonString)) !== null) {
+                    flashcards.push({
+                        question: match[1],
+                        answer: match[2]
+                    });
+                }
+
+                if (flashcards.length > 0) {
+                    this.flashcards = flashcards;
+                    return;
+                }
+
+                this.showError("Impossibile interpretare la risposta AI");
+            } catch (fixError) {
+                console.error("Correzione JSON fallita:", fixError);
+                this.showError("Errore grave nell'interpretazione della risposta");
+            }
+        },
+
+        async deleteGroup(groupName) {
+            if (!confirm(`Sei sicuro di voler eliminare TUTTO il gruppo "${groupName}"? Questa azione è irreversibile!`)) {
+                return;
+            }
+
+            this.deleting = true;
+
+            try {
+                await this.$axios.delete(`http://localhost:8000/api/flashcards/group/${encodeURIComponent(groupName)}`);
+
+                this.savedFlashcards = this.savedFlashcards.filter(card => card.group_name !== groupName);
+
+                this.showSuccess(`Gruppo "${groupName}" eliminato completamente!`);
+            } catch (error) {
+                console.error("Errore nell'eliminazione del gruppo:", error);
+                this.showError("Errore nell'eliminazione del gruppo");
+            } finally {
+                this.deleting = false;
+            }
         }
-    }
     }
 }
 </script>
@@ -520,6 +736,55 @@ export default {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     overflow: hidden;
+}
+
+.group-header {
+    background-color: #e0f2f1;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.flashcards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+    padding: 10px;
+}
+
+.mini-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #ffffff, #f0f0f0);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    border-left: 4px solid #ff9f1c;
+}
+
+.mini-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(145deg, #ffffff, #e6f7ff);
+}
+
+.question-text {
+    font-size: 0.95rem;
+    padding: 12px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.question-dialog,
+.answer-dialog {
+    font-size: 1.1rem;
+    padding: 10px;
+    line-height: 1.6;
 }
 
 .v-expansion-panel-header {
@@ -663,5 +928,16 @@ export default {
 
 .file-card:hover::before {
     transform: translate(10%, -10%);
+}
+
+.group-header .v-btn--icon {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.group-header .v-btn--icon:hover {
+    transform: scale(1.1);
+    background: rgba(255, 235, 238, 0.9) !important;
 }
 </style>

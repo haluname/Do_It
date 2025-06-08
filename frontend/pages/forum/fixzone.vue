@@ -13,12 +13,7 @@
                   Soluzioni Condivise
                 </v-toolbar-title>
                 <v-spacer></v-spacer>
-                <v-btn 
-                  v-if="$auth.loggedIn" 
-                  color="orange darken-3" 
-                  dark 
-                  @click="newSolutionDialog = true"
-                >
+                <v-btn v-if="$auth.loggedIn" color="orange darken-3" dark @click="newSolutionDialog = true">
                   <v-icon left>mdi-plus</v-icon>
                   Condividi una Soluzione
                 </v-btn>
@@ -26,7 +21,7 @@
 
               <v-card-text>
                 <p class="body-1">
-                  In questa sezione, gli utenti condividono problemi comuni e le loro soluzioni. 
+                  In questa sezione, gli utenti condividono problemi comuni e le loro soluzioni.
                   Se una soluzione ti è stata utile, metti un like per aiutare altri a trovarla più facilmente!
                 </p>
               </v-card-text>
@@ -34,33 +29,13 @@
 
             <!-- Filtri e ordinamento -->
             <div class="d-flex align-center mb-6">
-              <v-select
-                v-model="sortBy"
-                :items="sortOptions"
-                label="Ordina per"
-                outlined
-                dense
-                hide-details
-                style="max-width: 250px;"
-              ></v-select>
-              
-              <v-text-field
-                v-model="searchQuery"
-                prepend-inner-icon="mdi-magnify"
-                label="Cerca soluzioni..."
-                outlined
-                dense
-                hide-details
-                class="ml-4"
-                style="max-width: 300px;"
-              ></v-text-field>
-              
-              <v-btn 
-                color="orange darken-3" 
-                dark 
-                class="ml-4"
-                @click="loadSolutions"
-              >
+              <v-select v-model="sortBy" :items="sortOptions" label="Ordina per" outlined dense hide-details
+                style="max-width: 250px;"></v-select>
+
+              <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify" label="Cerca soluzioni..." outlined
+                dense hide-details class="ml-4" style="max-width: 300px;"></v-text-field>
+
+              <v-btn color="orange darken-3" dark class="ml-4" @click="loadSolutions">
                 <v-icon left>mdi-filter</v-icon>
                 Applica
               </v-btn>
@@ -68,24 +43,13 @@
 
             <!-- Lista Soluzioni -->
             <v-row>
-              <v-col 
-                v-for="solution in solutions" 
-                :key="solution.id" 
-                cols="12" 
-                md="6"
-              >
+              <v-col v-for="solution in solutions" :key="solution.id" cols="12" md="6">
                 <SolutionCard :solution="solution" @like-toggled="toggleLike" />
               </v-col>
             </v-row>
 
-            <v-pagination 
-              v-model="page" 
-              :length="totalPages" 
-              circle 
-              color="orange darken-2" 
-              class="mt-6"
-              @input="loadSolutions"
-            ></v-pagination>
+            <v-pagination v-model="page" :length="totalPages" circle color="orange darken-2" class="mt-6"
+              @input="loadSolutions"></v-pagination>
           </v-col>
         </v-row>
       </v-container>
@@ -111,57 +75,29 @@
           </v-alert>
 
           <!-- Campi del form -->
-          <v-text-field 
-            v-model="newSolution.title" 
-            label="Titolo" 
-            outlined 
-            :error-messages="titleErrors"
-            @input="resetTitleError"
-          ></v-text-field>
+          <v-text-field v-model="newSolution.title" label="Titolo" outlined :error-messages="titleErrors"
+            @input="resetTitleError"></v-text-field>
 
-          <v-textarea 
-            v-model="newSolution.problem" 
-            label="Problema riscontrato" 
-            outlined 
-            rows="3"
-            :error-messages="problemErrors"
-            @input="resetProblemError"
-          ></v-textarea>
+          <v-textarea v-model="newSolution.problem" label="Problema riscontrato" outlined rows="3"
+            :error-messages="problemErrors" @input="resetProblemError"></v-textarea>
 
-          <v-textarea 
-            v-model="newSolution.solution" 
-            label="Soluzione applicata" 
-            outlined 
-            rows="5"
-            :error-messages="solutionErrors"
-            @input="resetSolutionError"
-          ></v-textarea>
+          <v-textarea v-model="newSolution.solution" label="Soluzione applicata" outlined rows="5"
+            :error-messages="solutionErrors" @input="resetSolutionError"></v-textarea>
         </v-card-text>
 
         <v-card-actions>
           <v-spacer></v-spacer>
           <!-- Pulsante con stato di caricamento -->
-          <v-btn 
-            color="orange darken-3" 
-            dark 
-            @click="validateAndSubmit" 
-            :disabled="validating || submitting"
-          >
+          <v-btn color="orange darken-3" dark @click="validateAndSubmit" :disabled="validating || submitting">
             <template v-if="validating">
-            
+
             </template>
-            
+
             <template v-else-if="submitting">
-              <v-progress-circular
-                indeterminate
-                size="20"
-                width="2"
-                color="white"
-                class="mr-2"
-              ></v-progress-circular>
+              <v-progress-circular indeterminate size="20" width="2" color="white" class="mr-2"></v-progress-circular>
               Pubblicazione in corso...
             </template>
-            
+
             <template v-else>
               <v-icon left>mdi-shield-check</v-icon>
               Pubblica Soluzione
@@ -220,42 +156,41 @@ export default {
           sort: this.sortBy,
           search: this.searchQuery
         }
-        
+
         const response = await this.$axios.get('/api/solutions', { params })
-        
+
         this.solutions = response.data.data
         this.totalPages = response.data.meta.last_page
       } catch (error) {
         this.$toast.error('Errore nel caricamento delle soluzioni')
       }
     },
-    
+
     resetTitleError() {
       delete this.errors.title
     },
-    
+
     resetProblemError() {
       delete this.errors.problem
     },
-    
+
     resetSolutionError() {
       delete this.errors.solution
     },
-    
+
     async validateContentWithAI() {
       this.validating = true;
       this.validationResult = null;
-      
+
       try {
         const contentToValidate = `
 TITOLO: ${this.newSolution.title}
 PROBLEMA: ${this.newSolution.problem}
 SOLUZIONE: ${this.newSolution.solution}
         `;
-        
-        const prompt = `Analizza il seguente contributo per un forum di soluzioni. 
-Devi rispondere SOLO con JSON: {"valid": boolean, "message": string}
 
+        const prompt = `Analizza il seguente contributo per un forum di soluzioni. 
+"Devi rispondere SOLO con JSON: {\"valid\": boolean, \"message\": string}\n- Risposta minima 5 parole\n- Evita testo extra"
 Regole di validazione:
 1. VALIDA=true solo se:
    - Contenuto pertinente a studio, produttività o tecnologia
@@ -280,28 +215,25 @@ ${contentToValidate}`;
           },
           body: JSON.stringify({
             model: 'meta-llama/llama-3.3-70b-instruct:free',
-            messages: [{ 
-              role: 'user', 
-              content: prompt 
+            messages: [{
+              role: 'user',
+              content: prompt
             }],
-            response_format: { type: "json_object" },
-            max_tokens: 150,
           }),
         });
 
         const data = await response.json();
-        const aiResponse = data.choices?.[0]?.message?.content;
-        
-        // Estrae il JSON dalla risposta
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        const aiResponse = data.choices?.[0]?.message?.content; 
+
+        const jsonMatch = aiResponse?.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           return JSON.parse(jsonMatch[0]);
         }
-        
         return {
           valid: false,
           message: "Formato di risposta AI non valido"
         };
+
       } catch (error) {
         console.error("Errore nella validazione AI:", error);
         return {
@@ -312,21 +244,23 @@ ${contentToValidate}`;
         this.validating = false;
       }
     },
-    
+
     async validateAndSubmit() {
       // Validazione AI
       this.validationResult = await this.validateContentWithAI();
-      
+
       if (!this.validationResult || !this.validationResult.valid) {
         const errorMessage = this.validationResult?.message || "Il contenuto non è valido per la pubblicazione";
         this.$toast.error(`Validazione fallita: ${errorMessage}`);
         return;
       }
-      
-      // Se la validazione è OK, procedi con l'invio
+      else{
+        this.validationResult = null;
+      }
+
       await this.submitSolution();
     },
-    
+
     async submitSolution() {
       this.submitting = true;
       try {
@@ -335,13 +269,15 @@ ${contentToValidate}`;
             Authorization: `Bearer ${this.$auth.strategy.token.get()}`
           }
         });
-        
+
         this.$toast.success('Soluzione pubblicata con successo!');
         this.closeDialog();
         this.loadSolutions();
       } catch (error) {
         if (error.response?.status === 422) {
           this.errors = error.response.data.errors;
+        } else if (error.response?.status === 403) {
+          this.$toast.error(error.response.data.error);
         } else {
           this.$toast.error('Errore durante la pubblicazione');
         }
@@ -349,14 +285,14 @@ ${contentToValidate}`;
         this.submitting = false;
       }
     },
-    
+
     closeDialog() {
       this.newSolutionDialog = false;
       this.newSolution = { title: '', problem: '', solution: '' };
       this.errors = {};
       this.validationResult = null;
     },
-    
+
     async toggleLike(solutionId) {
       try {
         const response = await this.$axios.post(`/api/solutions/${solutionId}/like`, {}, {
@@ -366,8 +302,7 @@ ${contentToValidate}`;
         })
 
         console.log("Like = " + response.data.likes_count)
-        
-        // Aggiorna la soluzione locale
+
         const solution = this.solutions.find(s => s.id === solutionId)
         if (solution) {
           solution.likes_count = response.data.likes_count
@@ -385,12 +320,11 @@ ${contentToValidate}`;
 </script>
 
 <style scoped>
-
-
 .v-main {
   overflow-y: auto !important;
   height: 100vh;
 }
+
 .solution-card {
   transition: all 0.3s ease;
 }

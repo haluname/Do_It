@@ -386,7 +386,7 @@ export default {
       return { 2: 'red', 1: 'orange', 0: 'green' }[priority] || 'gray';
     },
 
-    // Metodi esistenti per generare e salvare task automatici...
+    // Metodi esistenti per generare e salvare task automatici
     async saveTasks() {
       this.savingTasks = true;
       try {

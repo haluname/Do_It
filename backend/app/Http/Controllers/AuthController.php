@@ -28,11 +28,11 @@ class AuthController extends Controller
         }
 
         /** @var User $user */
-        $user = Auth::user(); // <-- Type hinting per IDE
+        $user = Auth::user(); 
 
         return response()->json([
             'user' => $user,
-            'token' => $user->createToken('auth_token')->plainTextToken // <-- Ora dovrebbe funzionare
+            'token' => $user->createToken('auth_token')->plainTextToken 
         ]);
     }
 
