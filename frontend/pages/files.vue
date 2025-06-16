@@ -6,6 +6,58 @@
 
         <v-main style="background-color: #fdf3e4;">
             <v-container class="py-4" style="min-height: 90vh;">
+
+                         <!-- Sezione File Caricati -->
+                <v-card elevation="6" class="mb-8">
+                    <v-toolbar flat color="teal lighten-5">
+                        <v-toolbar-title class="teal--text text--darken-3">
+                            <v-icon left>mdi-file-multiple</v-icon>
+                            I Tuoi File
+                        </v-toolbar-title>
+                    </v-toolbar>
+
+                    <v-card-text>
+                        <div v-if="files.length === 0" class="text-center py-4 grey--text">
+                            <v-icon size="64" color="grey lighten-2">mdi-file-remove</v-icon>
+                            <p class="mt-2">Non hai caricato nessun file</p>
+                        </div>
+                        <v-slide-group show-arrows class="pa-2 mb-8" style="overflow: visible; min-height: 500px;">
+                            <v-slide-item v-for="file in files" :key="file.id" v-slot="{ toggle }" class="mb-4">
+                                <div class="carousel-item mx-2" style="margin-top: 20px; margin-bottom: 20px;">
+                                    <v-card class="file-card" elevation="6" width="300" style="min-height: 200px;"
+                                        :data-file-type="getFileType(file.mime_type)">
+                                        <v-card-title class="file-title">
+                                            <v-icon class="mr-2">{{ fileIcon(file.mime_type) }}</v-icon>
+                                            {{ truncateFileName(file.original_name) }}
+                                        </v-card-title>
+
+                                        <v-card-text>
+                                            <div class="file-info">
+                                                <v-chip small class="mb-2">
+                                                    {{ formatSize(file.size) }}
+                                                </v-chip>
+                                                <div>{{ formatDate(file.created_at) }}</div>
+                                            </div>
+                                        </v-card-text>
+
+                                        <v-card-actions class="justify-end pa-2">
+                                            <v-btn icon v-if="isPreviewable(file.mime_type)" @click="openFile(file)"
+                                                color="teal">
+                                                <v-icon>mdi-open-in-new</v-icon>
+                                            </v-btn>
+                                            <v-btn icon @click="downloadFile(file)" color="primary">
+                                                <v-icon>mdi-download</v-icon>
+                                            </v-btn>
+                                            <v-btn icon @click="deleteFile(file)" color="error">
+                                                <v-icon>mdi-delete</v-icon>
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </div>
+                            </v-slide-item>
+                        </v-slide-group>
+                    </v-card-text>
+                </v-card>
                 <!-- Sezione Flashcard Salvate -->
                 <v-card elevation="6" class="mb-8">
                     <v-toolbar flat color="teal lighten-5">
@@ -112,42 +164,7 @@
                     </v-card>
                 </v-dialog>
 
-                <!-- Sezione File Caricati -->
-                <v-slide-group show-arrows class="pa-2 mb-8" style="overflow: visible; min-height: 500px;">
-                    <v-slide-item v-for="file in files" :key="file.id" v-slot="{ toggle }" class="mb-4">
-                        <div class="carousel-item mx-2" style="margin-top: 20px; margin-bottom: 20px;">
-                            <v-card class="file-card" elevation="6" width="300" style="min-height: 200px;"
-                                :data-file-type="getFileType(file.mime_type)">
-                                <v-card-title class="file-title">
-                                    <v-icon class="mr-2">{{ fileIcon(file.mime_type) }}</v-icon>
-                                    {{ truncateFileName(file.original_name) }}
-                                </v-card-title>
-
-                                <v-card-text>
-                                    <div class="file-info">
-                                        <v-chip small class="mb-2">
-                                            {{ formatSize(file.size) }}
-                                        </v-chip>
-                                        <div>{{ formatDate(file.created_at) }}</div>
-                                    </div>
-                                </v-card-text>
-
-                                <v-card-actions class="justify-end pa-2">
-                                    <v-btn icon v-if="isPreviewable(file.mime_type)" @click="openFile(file)"
-                                        color="teal">
-                                        <v-icon>mdi-open-in-new</v-icon>
-                                    </v-btn>
-                                    <v-btn icon @click="downloadFile(file)" color="primary">
-                                        <v-icon>mdi-download</v-icon>
-                                    </v-btn>
-                                    <v-btn icon @click="deleteFile(file)" color="error">
-                                        <v-icon>mdi-delete</v-icon>
-                                    </v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </div>
-                    </v-slide-item>
-                </v-slide-group>
+       
 
                 <!-- Sezione Generatore di Flashcard -->
                 <v-card elevation="6" class="mb-8">

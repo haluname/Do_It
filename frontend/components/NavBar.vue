@@ -6,14 +6,14 @@
         <v-img src="/img/logoBIG.svg" alt="Do!t Logo" max-width="120" class="mx-auto"></v-img>
       </NuxtLink>
 
-      <v-chip class="mx-auto my-4" color="primary" dark label style="font-weight: 600; font-size: 1.1rem;">
+      <v-chip class="mx-auto my-4" color="primary" dark label style="font-weight: 600; font-size: 1.1rem; height: fit-content;">
         <v-avatar size="40" class="mr-3 rounded-circle" style="border: 2px solid #ffd166;">
           <span style="text-transform: uppercase;">
             {{ $auth.user.name ? $auth.user.name[0] : '?' }}
           </span>
 
         </v-avatar>
-        Ciao, {{ $auth.user.name }}
+        Ciao, <br>{{ $auth.user.name }}
       </v-chip>
 
       <v-list dense nav class="mt-4">
@@ -77,9 +77,10 @@ export default {
   data() {
     return {
       navItems: [
-        { title: 'Home', icon: 'mdi-view-dashboard', route: '/home' },
+        { title: 'Home', icon: 'mdi-home', route: '/home' },
         { title: 'Goals', icon: 'mdi-folder-multiple', route: '/goals' },
         { title: 'TODAY', icon: 'mdi-star', route: '/today' },
+        { title: 'Routines', icon: 'mdi-view-dashboard', route: '/routines' },
         { title: 'Study Session', icon: 'mdi-timer', route: '/study-session' },
         { title: 'Files', icon: 'mdi-archive', route: '/files' }
       ],

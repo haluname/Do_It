@@ -21,6 +21,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\FlashcardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResourceController;
+use App\Http\Controllers\RoutineController;
 use App\Http\Controllers\SolutionController;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -68,11 +69,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/threads/{id}/posts', [ThreadController::class, 'getPosts']);
     Route::put('/threads/{id}/pin', [ThreadController::class, 'updatePin'])->middleware('auth:sanctum');
     Route::put('/threads/{id}/close', [ThreadController::class, 'updateClose'])->middleware('auth:sanctum');
+    
     Route::get('/categories', [CategoryController::class, 'index']);
+    Route::post('/categories', [CategoryController::class, 'store']);
 
 
 
-    // Rotte per i report
     Route::get('/reports', [ReportController::class, 'index']);
     Route::post('/reports', [ReportController::class, 'store']);
     Route::get('/reports/check', [ReportController::class, 'check']);
@@ -89,7 +91,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/resources/books', [ResourceController::class, 'storeBook']);
     Route::get('/stats', [ThreadController::class, 'stats']);
 
-    // api.php
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::put('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
@@ -105,4 +106,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('flashcards', FlashcardController::class)->only(['index', 'store', 'destroy']);
     Route::delete('/flashcards/group/{group_name}', [FlashcardController::class, 'deleteGroup']);
 
+    Route::get('/routines', [RoutineController::class, 'index']);
+    Route::post('/routines', [RoutineController::class, 'store']);
+    Route::delete('/routines/{id}', [RoutineController::class, 'destroy']);
+    Route::post('/routines/{id}/complete', [RoutineController::class, 'complete']);
+    
+    Route::post('/send-reminders', [RoutineController::class, 'sendReminders']);
 });

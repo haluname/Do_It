@@ -157,6 +157,16 @@
                 style="position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #6d4c41;">
                 © {{ new Date().getFullYear() }} Do!t. Tutti i diritti riservati.
             </span>
+            <v-chip-group column>
+                <!-- Categorie esistenti -->
+
+                <!-- Pulsante nuova categoria (solo per mod) -->
+                <v-chip v-if="$auth.user && $auth.user.forum_role === 'mod'" color="green" text-color="white"
+                    @click="openNewCategoryDialog">
+                    <v-icon left>mdi-plus</v-icon>
+                    Nuova
+                </v-chip>
+            </v-chip-group>
         </v-main>
 
         <!-- Dialog nuova discussione -->
@@ -197,6 +207,33 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <v-dialog v-model="newCategoryDialog" max-width="500">
+            <v-card>
+                <v-toolbar color="green" dark>
+                    <v-toolbar-title>Nuova Categoria</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-btn icon @click="newCategoryDialog = false">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-toolbar>
+
+                <v-card-text class="pt-4">
+                    <v-text-field v-model="newCategory.name" label="Nome categoria" outlined
+                        :error-messages="newCategoryErrors.name"></v-text-field>
+
+                    <v-color-picker v-model="newCategory.color" mode="hexa" swatches-max-height="100"></v-color-picker>
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="green" dark @click="createCategory" :loading="creatingCategory">
+                        Crea
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
     </v-app>
 </template>
 
@@ -247,7 +284,14 @@ export default {
                 category: '',
                 title: '',
                 content: ''
-            }
+            },
+            newCategoryDialog: false,
+            newCategory: {
+                name: '',
+                color: '#FF9800'
+            },
+            newCategoryErrors: {},
+            creatingCategory: false,
         }
     },
     computed: {
@@ -468,6 +512,32 @@ export default {
                 this.topUsers = response.data.top_users;
             } catch (error) {
                 console.error('Errore caricamento statistiche:', error);
+            }
+        },
+        openNewCategoryDialog() {
+            this.newCategory = { name: '', color: '#FF9800' };
+            this.newCategoryErrors = {};
+            this.newCategoryDialog = true;
+        },
+
+        async createCategory() {
+            this.creatingCategory = true;
+            try {
+                const response = await this.$axios.post('/api/categories', this.newCategory, {
+                    headers: { Authorization: `Bearer ${this.$auth.strategy.token.get()}` }
+                });
+
+                this.$toast.success('Categoria creata con successo!');
+                await this.loadCategories();
+                this.newCategoryDialog = false;
+            } catch (error) {
+                if (error.response.status === 422) {
+                    this.newCategoryErrors = error.response.data.errors;
+                } else {
+                    this.$toast.error('Errore nella creazione della categoria');
+                }
+            } finally {
+                this.creatingCategory = false;
             }
         }
 
